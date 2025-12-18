@@ -1,31 +1,129 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\AssetController;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\UserController;
 
 /*
 |--------------------------------------------------------------------------
 | Web Routes
 |--------------------------------------------------------------------------
+|
+| Here is where you can register web routes for your application. These
+| routes are loaded by the RouteServiceProvider and all of them will
+| be assigned to the "web" middleware group. Make something great!
+|
 */
 
+// Public routes
 Route::get('/', function () {
-    return view('welcome');
+    return redirect('/login');
 });
 
-// === ROUTES MANAJEMEN ASET ===
+Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+Route::post('/login', [AuthController::class, 'login']);
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-// 1. Read (Menampilkan Daftar Aset)
-Route::get('/assets', [AssetController::class, 'index']);
+// Debug route untuk testing Firebase
+Route::get('/debug-firebase', function () {
+    try {
+        $path = config('firebase.credentials');
+        
+        $debugInfo = [
+            'credentials_path' => $path,
+            'file_exists' => file_exists($path) ? 'YES' : 'NO',
+            'is_readable' => is_readable($path) ? 'YES' : 'NO',
+            'full_path' => realpath($path) ?: 'NOT FOUND',
+        ];
+        
+        dd($debugInfo);
+        
+    } catch (\Exception $e) {
+        dd('Error: ' . $e->getMessage());
+    }
+});
 
-// 2. Create (Form Tambah & Proses Simpan)
-// PENTING: Route 'create' harus ditaruh SEBELUM route '{id}'
-Route::get('/assets/create', [AssetController::class, 'create']);
-Route::post('/assets', [AssetController::class, 'store']);
+// Protected routes - VERSI SEDERHANA TANPA MIDDLEWARE DULU
+Route::get('/dashboard', function () {
+    // Cek session manual dulu
+    if (!session()->has('user')) {
+        return redirect('/login')->with('error', 'Silakan login terlebih dahulu.');
+    }
+    
+    $user = session()->get('user');
+    return view('dashboard', [
+        'user' => $user,
+        'title' => 'Dashboard CIATS',
+    ]);
+});
 
-// 3. Edit (Form Edit & Proses Update)
-Route::get('/assets/{id}/edit', [AssetController::class, 'edit']); // Form Edit
-Route::put('/assets/{id}', [AssetController::class, 'update']);    // Proses Update (Pakai PUT)
+// Admin routes - VERSI SEDERHANA DULU
+Route::prefix('admin')->group(function () {
+    Route::get('/users', function () {
+        // Cek session manual
+        if (!session()->has('user')) {
+            return redirect('/login');
+        }
+        
+        // Cek role manual
+        $user = session()->get('user');
+        if ($user['role'] !== 'admin') {
+            session()->flash('error', 'Akses ditolak!');
+            return redirect('/dashboard');
+        }
+        
+        // Instansiasi controller
+        $controller = new UserController();
+        return $controller->index();
+    });
+    
+    Route::get('/users/create', function () {
+        if (!session()->has('user')) {
+            return redirect('/login');
+        }
+        
+        $user = session()->get('user');
+        if ($user['role'] !== 'admin') {
+            session()->flash('error', 'Akses ditolak!');
+            return redirect('/dashboard');
+        }
+        
+        $controller = new UserController();
+        return $controller->create();
+    });
+    
+    Route::post('/users', function (Illuminate\Http\Request $request) {
+        if (!session()->has('user')) {
+            return redirect('/login');
+        }
+        
+        $user = session()->get('user');
+        if ($user['role'] !== 'admin') {
+            session()->flash('error', 'Akses ditolak!');
+            return redirect('/dashboard');
+        }
+        
+        $controller = new UserController();
+        return $controller->store($request);
+    });
+    
+    Route::delete('/users/{id}', function ($id) {
+        if (!session()->has('user')) {
+            return redirect('/login');
+        }
+        
+        $user = session()->get('user');
+        if ($user['role'] !== 'admin') {
+            session()->flash('error', 'Akses ditolak!');
+            return redirect('/dashboard');
+        }
+        
+        $controller = new UserController();
+        return $controller->destroy($id);
+    });
+});
 
-// 4. Delete (Hapus Data)
-Route::delete('/assets/{id}', [AssetController::class, 'destroy']);
+// Route untuk testing session
+Route::get('/check-session', function () {
+    dd(session()->all());
+});
