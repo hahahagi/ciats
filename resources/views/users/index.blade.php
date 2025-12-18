@@ -36,27 +36,43 @@
                         <td>{{ $user['email'] }}</td>
                         <td>
                             @if($user['role'] === 'admin')
-                                <span class="badge bg-danger role-badge">Admin</span>
+                                <span class="badge bg-danger">Admin</span>
                             @elseif($user['role'] === 'operator')
-                                <span class="badge bg-warning role-badge">Operator</span>
+                                <span class="badge bg-warning">Operator</span>
                             @else
-                                <span class="badge bg-success role-badge">Employee</span>
+                                <span class="badge bg-success">Employee</span>
                             @endif
                         </td>
                         <td>{{ $user['created_at'] }}</td>
                         <td>
-                            @if($user['id'] !== $user['id']) <!-- Cegah hapus diri sendiri -->
-                            <form action="/admin/users/{{ $user['id'] }}" method="POST" 
-                                  class="d-inline" onsubmit="return confirm('Hapus user ini?');">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="btn btn-sm btn-danger">
+                            <div class="btn-group" role="group">
+
+                                <!-- Edit -->
+                                <a href="/admin/users/{{ $user['id'] }}/edit"
+                                   class="btn btn-sm btn-warning me-1">
+                                    <i class="bi bi-pencil"></i> Edit
+                                </a>
+
+                                <!-- Delete -->
+                                @if($user['email'] !== session('user')['email'])
+                                <form action="/admin/users/{{ $user['id'] }}"
+                                      method="POST"
+                                      class="d-inline delete-form"
+                                      data-name="{{ $user['name'] }}">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-sm btn-danger">
+                                        <i class="bi bi-trash"></i> Hapus
+                                    </button>
+                                </form>
+                                @else
+                                <button class="btn btn-sm btn-secondary" disabled
+                                        title="Tidak dapat menghapus akun sendiri">
                                     <i class="bi bi-trash"></i> Hapus
                                 </button>
-                            </form>
-                            @else
-                            <span class="text-muted">-</span>
-                            @endif
+                                @endif
+
+                            </div>
                         </td>
                     </tr>
                     @endforeach
@@ -74,11 +90,39 @@
     </div>
 </div>
 
-<div class="alert alert-info mt-3">
-    <small>
-        <i class="bi bi-info-circle"></i> 
-        <strong>Informasi:</strong> Hanya role <span class="badge bg-danger">Admin</span> yang dapat mengelola user.
-        Total user: <strong>{{ count($users) }}</strong>
-    </small>
+<div class="row mt-3">
+    <div class="col-md-6">
+        <div class="alert alert-info">
+            <small>
+                <i class="bi bi-info-circle"></i>
+                <strong>Informasi:</strong>
+                Hanya role <span class="badge bg-danger">Admin</span> yang dapat mengelola user.
+                Total user: <strong>{{ count($users) }}</strong>
+            </small>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="alert alert-warning">
+            <small>
+                <i class="bi bi-exclamation-triangle"></i>
+                <strong>Perhatian:</strong>
+                Anda tidak dapat menghapus akun sendiri.
+            </small>
+        </div>
+    </div>
 </div>
+
+{{-- JavaScript --}}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.delete-form').forEach(form => {
+        form.addEventListener('submit', function (e) {
+            const name = this.dataset.name;
+            if (!confirm(`Yakin hapus user "${name}"?\nTindakan ini tidak dapat dibatalkan.`)) {
+                e.preventDefault();
+            }
+        });
+    });
+});
+</script>
 @endsection

@@ -9,139 +9,75 @@
 </div>
 
 <div class="row">
-    <!-- Statistik -->
+    <!-- TOTAL USER -->
     <div class="col-md-3 mb-4">
-        <div class="card bg-primary text-white">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="card-title">Total User</h6>
-                        <h2 class="mb-0" id="totalUsers">0</h2>
-                    </div>
-                    <i class="bi bi-people fs-1"></i>
+        <div class="card bg-primary text-white shadow">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="card-title">Total User</h6>
+                    <h2 id="totalUsers">0</h2>
                 </div>
+                <i class="bi bi-people fs-1"></i>
             </div>
         </div>
     </div>
-    
+
+    <!-- ROLE -->
     <div class="col-md-3 mb-4">
-        <div class="card bg-success text-white">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="card-title">Total Inventaris</h6>
-                        <h2 class="mb-0">0</h2>
-                    </div>
-                    <i class="bi bi-box fs-1"></i>
+        <div class="card bg-info text-white shadow">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="card-title">Role Anda</h6>
+                    <h4 class="text-uppercase">{{ $user['role'] }}</h4>
                 </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-3 mb-4">
-        <div class="card bg-warning text-white">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="card-title">Total Assets</h6>
-                        <h2 class="mb-0">0</h2>
-                    </div>
-                    <i class="bi bi-tag fs-1"></i>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-3 mb-4">
-        <div class="card bg-info text-white">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="card-title">Role Anda</h6>
-                        <h4 class="mb-0 text-uppercase">{{ $user['role'] }}</h4>
-                    </div>
-                    <i class="bi bi-person-badge fs-1"></i>
-                </div>
+                <i class="bi bi-person-badge fs-1"></i>
             </div>
         </div>
     </div>
 </div>
 
-<div class="row">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Informasi Sistem</h5>
-            </div>
-            <div class="card-body">
-                <h6>CIATS - Cloud Inventory & Asset Tracking System</h6>
-                <p>Sistem ini menggunakan:</p>
-                <ul>
-                    <li>Laravel 12</li>
-                    <li>Firebase Realtime Database</li>
-                    <li>Custom Authentication</li>
-                    <li>Role-based Access Control</li>
-                </ul>
-                <div class="alert alert-info">
-                    <small>
-                        <strong>Note:</strong> Data disimpan di Firebase Cloud Database.
-                        Pastikan koneksi internet stabil.
-                    </small>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-shield-check me-2"></i>Hak Akses Role</h5>
-            </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-sm">
-                        <thead>
-                            <tr>
-                                <th>Role</th>
-                                <th>Manajemen User</th>
-                                <th>Inventaris</th>
-                                <th>Laporan</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><span class="badge bg-danger">Admin</span></td>
-                                <td><i class="bi bi-check-lg text-success"></i></td>
-                                <td><i class="bi bi-check-lg text-success"></i></td>
-                                <td><i class="bi bi-check-lg text-success"></i></td>
-                            </tr>
-                            <tr>
-                                <td><span class="badge bg-warning">Operator</span></td>
-                                <td><i class="bi bi-x-lg text-danger"></i></td>
-                                <td><i class="bi bi-check-lg text-success"></i></td>
-                                <td><i class="bi bi-check-lg text-success"></i></td>
-                            </tr>
-                            <tr>
-                                <td><span class="badge bg-success">Employee</span></td>
-                                <td><i class="bi bi-x-lg text-danger"></i></td>
-                                <td><i class="bi bi-x-lg text-danger"></i></td>
-                                <td><i class="bi bi-x-lg text-danger"></i></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
+<div class="alert alert-info mt-3">
+    <i class="bi bi-lightning-charge"></i>
+    Dashboard ini <strong>REAL-TIME</strong> menggunakan Firebase Realtime Database
 </div>
-
-<script>
-    // Fetch total users (contoh AJAX)
-    document.addEventListener('DOMContentLoaded', function() {
-        // Simulasi data
-        setTimeout(() => {
-            document.getElementById('totalUsers').textContent = '3';
-        }, 1000);
-    });
-</script>
 @endsection
+
+
+{{-- =============================== --}}
+{{-- FIREBASE REALTIME CONFIG & LOGIC --}}
+{{-- =============================== --}}
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+/* ===============================
+   FIREBASE CONFIG (PUNYA KAMU)
+   =============================== */
+const firebaseConfig = {
+  apiKey: "AIzaSyBL8j0WKEdC42ezt19bHli-fAHXL_jTRdU",
+  authDomain: "ciats-db-6f8b8.firebaseapp.com",
+  databaseURL: "https://ciats-db-6f8b8-default-rtdb.firebaseio.com",
+  projectId: "ciats-db-6f8b8",
+  storageBucket: "ciats-db-6f8b8.firebasestorage.app",
+  messagingSenderId: "615371494418",
+  appId: "1:615371494418:web:ad84bc3eac488e8cee74cb"
+};
+
+// Init Firebase
+const app = initializeApp(firebaseConfig);
+const database = getDatabase(app);
+
+/* ===============================
+   REALTIME TOTAL USER
+   =============================== */
+const usersRef = ref(database, 'users');
+
+onValue(usersRef, (snapshot) => {
+    const users = snapshot.val();
+
+    // Hitung jumlah user
+    const totalUser = users ? Object.keys(users).length : 0;
+
+    document.getElementById('totalUsers').textContent = totalUser;
+});
+</script>
