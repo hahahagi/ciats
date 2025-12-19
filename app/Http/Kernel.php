@@ -21,7 +21,8 @@ class Kernel extends HttpKernel
         \Illuminate\Foundation\Http\Middleware\ValidatePostSize::class,
         \App\Http\Middleware\TrimStrings::class,
         \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
-    ];
+        
+];
 
     /**
      * The application's route middleware groups.
@@ -68,5 +69,7 @@ class Kernel extends HttpKernel
         // CUSTOM MIDDLEWARE - INI YANG PERLU DITAMBAHKAN
         'auth.custom' => \App\Http\Middleware\AuthCustomMiddleware::class,
         'role' => \App\Http\Middleware\RoleMiddleware::class,
+        'auth.custom' => \App\Http\Middleware\AuthCustom::class,
+        'role' => \App\Http\Middleware\CheckRole::class,
     ];
 }
