@@ -54,13 +54,13 @@ import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10
    FIREBASE CONFIG (PUNYA KAMU)
    =============================== */
 const firebaseConfig = {
-  apiKey: "AIzaSyBL8j0WKEdC42ezt19bHli-fAHXL_jTRdU",
-  authDomain: "ciats-db-6f8b8.firebaseapp.com",
-  databaseURL: "https://ciats-db-6f8b8-default-rtdb.firebaseio.com",
-  projectId: "ciats-db-6f8b8",
-  storageBucket: "ciats-db-6f8b8.firebasestorage.app",
-  messagingSenderId: "615371494418",
-  appId: "1:615371494418:web:ad84bc3eac488e8cee74cb"
+  apiKey: "AIzaSyBthtd03Sez9mKwvPFCWhJRXis0y_6DT-Y",
+  authDomain: "ciats-9545b.firebaseapp.com",
+  databaseURL: "https://ciats-9545b-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "ciats-9545b",
+  storageBucket: "ciats-9545b.firebasestorage.app",
+  messagingSenderId: "895888204902",
+  appId: "1:895888204902:web:fde4c84d6dcc0fbcb0b9a7"
 };
 
 // Init Firebase

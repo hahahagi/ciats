@@ -1,16 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 return [
-    'project_id' => env('FIREBASE_PROJECT_ID'),
-    
-    // PAKAI ABSOLUTE PATH dengan base_path()
-    'credentials' => base_path('storage/app/firebase_credentials.json'),
-    
+    'credentials' => storage_path('app/firebase/firebase_credentials.json'),
+
     'database' => [
-        'url' => env('FIREBASE_DATABASE_URL'),
+        'url' => 'https://ciats-9545b-default-rtdb.asia-southeast1.firebasedatabase.app/    '
     ],
-    
+
     'auth' => [
         'emulator_host' => env('FIREBASE_AUTH_EMULATOR_HOST'),
     ],
 ];
+
