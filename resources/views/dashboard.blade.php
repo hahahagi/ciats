@@ -54,13 +54,13 @@ import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10
    FIREBASE CONFIG (PUNYA KAMU)
    =============================== */
 const firebaseConfig = {
-  apiKey: "AIzaSyBthtd03Sez9mKwvPFCWhJRXis0y_6DT-Y",
-  authDomain: "ciats-9545b.firebaseapp.com",
-  databaseURL: "https://ciats-9545b-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "ciats-9545b",
-  storageBucket: "ciats-9545b.firebasestorage.app",
-  messagingSenderId: "895888204902",
-  appId: "1:895888204902:web:fde4c84d6dcc0fbcb0b9a7"
+  apiKey: "{{ config('services.firebase.api_key') }}",
+  authDomain: "{{ config('services.firebase.auth_domain') }}",
+  databaseURL: "{{ config('services.firebase.database_url') }}",
+  projectId: "{{ config('services.firebase.project_id') }}",
+  storageBucket: "{{ config('services.firebase.storage_bucket') }}",
+  messagingSenderId: "{{ config('services.firebase.messaging_sender_id') }}",
+  appId: "{{ config('services.firebase.app_id') }}"
 };
 
 // Init Firebase

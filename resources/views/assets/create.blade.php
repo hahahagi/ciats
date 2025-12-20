@@ -51,6 +51,15 @@
         </div>
 
         <div class="form-group">
+            <label>Status</label>
+            <select name="status">
+                <option value="available">Available</option>
+                <option value="in_use">In Use</option>
+                <option value="broken">Broken</option>
+            </select>
+        </div>
+
+        <div class="form-group">
             <label>Lokasi Penyimpanan</label>
             <input type="text" name="location" placeholder="Contoh: Gudang A, Rak 2" required>
         </div>

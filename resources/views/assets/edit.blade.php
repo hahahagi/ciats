@@ -41,6 +41,15 @@
                 </div>
 
                 <div class="mb-3">
+                    <label class="form-label fw-bold">Status</label>
+                    <select name="status" class="form-select">
+                        <option value="available" {{ ($asset['status'] ?? '') == 'available' ? 'selected' : '' }}>Available</option>
+                        <option value="in_use" {{ ($asset['status'] ?? '') == 'in_use' ? 'selected' : '' }}>In Use</option>
+                        <option value="broken" {{ ($asset['status'] ?? '') == 'broken' ? 'selected' : '' }}>Broken</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
                     <label class="form-label fw-bold">Lokasi Penyimpanan</label>
                     <input type="text" name="location" class="form-control" value="{{ $asset['location'] ?? '' }}" required>
                 </div>
