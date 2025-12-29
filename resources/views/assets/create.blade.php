@@ -1,75 +1,149 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Test Input Aset ke Firebase</title>
-    <!-- CSS Sederhana biar gak sakit mata -->
-    <style>
-        body { font-family: sans-serif; padding: 20px; max-width: 500px; margin: 0 auto; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input, select { width: 100%; padding: 8px; box-sizing: border-box; }
-        button { background-color: #2563eb; color: white; padding: 10px 15px; border: none; cursor: pointer; }
-        button:hover { background-color: #1e40af; }
-        .alert { padding: 10px; background-color: #d1fae5; color: #065f46; margin-bottom: 15px; border-radius: 5px;}
-    </style>
-</head>
-<body>
+{{-- CREATE: assets/create.blade.php --}}
+@extends('layouts.app')
 
-    <h2>Uji Coba Input Barang</h2>
-    <p>Data ini akan langsung masuk ke Firebase.</p>
+@section('content')
+<div class="max-w-4xl mx-auto">
 
-    <!-- Menampilkan pesan sukses jika ada -->
-    @if(session('success'))
-        <div class="alert">
-            {{ session('success') }}
-        </div>
-    @endif
+    <!-- Back Button -->
+    <a href="{{ route('assets.index') }}" class="inline-flex items-center text-blue-600 hover:text-blue-700 mb-6">
+        <i class="fas fa-arrow-left mr-2"></i>
+        Kembali ke Daftar Aset
+    </a>
 
-    <form action="{{ url('/assets') }}" method="POST">
-        @csrf <!-- Token keamanan wajib di Laravel -->
-
-        <div class="form-group">
-            <label>Nama Barang / Aset</label>
-            <input type="text" name="name" placeholder="Contoh: Laptop Dell Latitude" required>
+    <!-- Form Card -->
+    <div class="bg-white rounded-xl shadow-xl p-8">
+        <div class="flex items-center space-x-3 mb-6">
+            <div class="bg-blue-100 p-3 rounded-lg">
+                <i class="fas fa-plus-circle text-blue-600 text-2xl"></i>
+            </div>
+            <div>
+                <h1 class="text-2xl font-bold text-gray-800">Tambah Aset Baru</h1>
+                <p class="text-gray-600">Lengkapi informasi aset yang akan ditambahkan</p>
+            </div>
         </div>
 
-        <div class="form-group">
-            <label>Kategori</label>
-            <select name="category">
-                <option value="Elektronik">Elektronik</option>
-                <option value="Furniture">Furniture</option>
-                <option value="Kendaraan">Kendaraan</option>
-                <option value="Lainnya">Lainnya</option>
-            </select>
-        </div>
+        <form action="{{ route('assets.store') }}" method="POST" class="space-y-6">
+            @csrf
 
-        <div class="form-group">
-            <label>Serial Number (Opsional)</label>
-            <input type="text" name="serial_number" placeholder="SN-12345">
-        </div>
+            <!-- Name -->
+            <div>
+                <label class="block text-gray-700 font-medium mb-2">
+                    <i class="fas fa-box text-blue-600 mr-2"></i>
+                    Nama Aset <span class="text-red-500">*</span>
+                </label>
+                <input type="text" name="name" value="{{ old('name') }}"
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition"
+                    placeholder="Contoh: Laptop Dell XPS 15" required>
+                @error('name')
+                <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                @enderror
+            </div>
 
-        <div class="form-group">
-            <label>Status</label>
-            <select name="status">
-                <option value="available">Available</option>
-                <option value="in_use">In Use</option>
-                <option value="broken">Broken</option>
-            </select>
-        </div>
+            <!-- Category & Serial Number -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Category -->
+                <div>
+                    <label class="block text-gray-700 font-medium mb-2">
+                        <i class="fas fa-tag text-blue-600 mr-2"></i>
+                        Kategori <span class="text-red-500">*</span>
+                    </label>
+                    <select name="category"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition capitalize"
+                        required>
+                        <option value="">Pilih Kategori</option>
+                        <option value="laptop" {{ old('category') == 'laptop' ? 'selected' : '' }}>Laptop</option>
+                        <option value="monitor" {{ old('category') == 'monitor' ? 'selected' : '' }}>Monitor</option>
+                        <option value="keyboard" {{ old('category') == 'keyboard' ? 'selected' : '' }}>Keyboard</option>
+                        <option value="mouse" {{ old('category') == 'mouse' ? 'selected' : '' }}>Mouse</option>
+                        <option value="printer" {{ old('category') == 'printer' ? 'selected' : '' }}>Printer</option>
+                        <option value="scanner" {{ old('category') == 'scanner' ? 'selected' : '' }}>Scanner</option>
+                        <option value="projector" {{ old('category') == 'projector' ? 'selected' : '' }}>Projector
+                        </option>
+                        <option value="other" {{ old('category') == 'other' ? 'selected' : '' }}>Lainnya</option>
+                    </select>
+                    @error('category')
+                    <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
 
-        <div class="form-group">
-            <label>Lokasi Penyimpanan</label>
-            <input type="text" name="location" placeholder="Contoh: Gudang A, Rak 2" required>
-        </div>
+                <!-- Serial Number -->
+                <div>
+                    <label class="block text-gray-700 font-medium mb-2">
+                        <i class="fas fa-barcode text-blue-600 mr-2"></i>
+                        Serial Number <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" name="serial_number" value="{{ old('serial_number') }}"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition font-mono"
+                        placeholder="SN123456789" required>
+                    @error('serial_number')
+                    <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
+            </div>
 
-        <button type="submit">Simpan ke Firebase</button>
-    </form>
+            <!-- Location -->
+            <div>
+                <label class="block text-gray-700 font-medium mb-2">
+                    <i class="fas fa-map-marker-alt text-blue-600 mr-2"></i>
+                    Lokasi <span class="text-red-500">*</span>
+                </label>
+                <select name="location"
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition"
+                    required>
+                    <option value="">Pilih Lokasi</option>
+                    @foreach($locations as $locId => $location)
+                    <option value="{{ $location['name'] ?? $locId }}"
+                        {{ old('location') == ($location['name'] ?? $locId) ? 'selected' : '' }}>
+                        {{ $location['name'] ?? $locId }}
+                    </option>
+                    @endforeach
+                </select>
+                @error('location')
+                <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                @enderror
+            </div>
 
-    <br>
-    <hr>
-    <a href="{{ url('/assets') }}">Lihat Data JSON (Cek Hasil)</a>
+            <!-- Description -->
+            <div>
+                <label class="block text-gray-700 font-medium mb-2">
+                    <i class="fas fa-align-left text-blue-600 mr-2"></i>
+                    Deskripsi
+                </label>
+                <textarea name="description" rows="4"
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition"
+                    placeholder="Deskripsi tambahan tentang aset...">{{ old('description') }}</textarea>
+                @error('description')
+                <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                @enderror
+                <p class="text-sm text-gray-500 mt-1">Opsional - Maksimal 500 karakter</p>
+            </div>
 
-</body>
-</html>
+            <!-- Info Box -->
+            <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-lg">
+                <div class="flex items-start">
+                    <i class="fas fa-info-circle text-blue-600 text-xl mr-3 mt-1"></i>
+                    <div>
+                        <p class="font-medium text-blue-900">QR Code akan digenerate otomatis</p>
+                        <p class="text-sm text-blue-700 mt-1">Setelah aset ditambahkan, QR Code akan dibuat secara
+                            otomatis dan dapat diprint.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Buttons -->
+            <div class="flex gap-4 pt-4">
+                <button type="submit"
+                    class="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-lg hover:shadow-lg transition">
+                    <i class="fas fa-save mr-2"></i>
+                    Simpan Aset
+                </button>
+                <a href="{{ route('assets.index') }}"
+                    class="px-6 py-3 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition">
+                    <i class="fas fa-times mr-2"></i>
+                    Batal
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+@endsection

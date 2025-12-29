@@ -1,75 +1,90 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="row justify-content-center">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-pencil-square me-2"></i>Edit User</h5>
+<div class="max-w-2xl mx-auto">
+
+    <a href="{{ route('admin.users.index') }}"
+        class="inline-flex items-center text-blue-600 hover:text-blue-700 mb-6 text-sm sm:text-base">
+        <i class="fas fa-arrow-left mr-2"></i>
+        Kembali
+    </a>
+
+    <div class="bg-white rounded-xl shadow-xl p-4 sm:p-8">
+        <div class="flex items-center space-x-3 mb-6">
+            <div class="bg-blue-100 p-3 rounded-lg">
+                <i class="fas fa-user-edit text-blue-600 text-xl sm:text-2xl"></i>
             </div>
-            <div class="card-body">
-                <form method="POST" action="/admin/users/{{ $user['id'] }}">
-                    @csrf
-                    @method('PUT')
-                    
-                    <div class="mb-3">
-                        <label for="name" class="form-label">Nama Lengkap</label>
-                        <input type="text" class="form-control" id="name" name="name" 
-                               value="{{ old('name', $user['name']) }}" required>
-                        @error('name')
-                        <div class="text-danger small">{{ $message }}</div>
-                        @enderror
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="email" class="form-label">Email</label>
-                        <input type="email" class="form-control" id="email" name="email" 
-                               value="{{ old('email', $user['email']) }}" required>
-                        @error('email')
-                        <div class="text-danger small">{{ $message }}</div>
-                        @enderror
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="password" class="form-label">Password Baru (Kosongkan jika tidak ingin mengubah)</label>
-                        <input type="password" class="form-control" id="password" name="password">
-                        <div class="form-text">Minimal 6 karakter</div>
-                        @error('password')
-                        <div class="text-danger small">{{ $message }}</div>
-                        @enderror
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="password_confirmation" class="form-label">Konfirmasi Password Baru</label>
-                        <input type="password" class="form-control" id="password_confirmation" 
-                               name="password_confirmation">
-                    </div>
-                    
-                    <div class="mb-4">
-                        <label for="role" class="form-label">Role</label>
-                        <select class="form-select" id="role" name="role" required>
-                            @foreach($roles as $role)
-                            <option value="{{ $role }}" {{ old('role', $user['role']) == $role ? 'selected' : '' }}>
-                                {{ ucfirst($role) }}
-                            </option>
-                            @endforeach
-                        </select>
-                        @error('role')
-                        <div class="text-danger small">{{ $message }}</div>
-                        @enderror
-                    </div>
-                    
-                    <div class="d-grid gap-2">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-save"></i> Update User
-                        </button>
-                        <a href="/admin/users" class="btn btn-outline-secondary">
-                            <i class="bi bi-arrow-left"></i> Kembali
-                        </a>
-                    </div>
-                </form>
+            <div>
+                <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Edit User</h1>
+                <p class="text-sm text-gray-600">Update informasi user</p>
             </div>
         </div>
+
+        <form action="{{ route('admin.users.update', $user['id']) }}" method="POST" class="space-y-5">
+            @csrf
+            @method('PUT')
+
+            <div>
+                <label class="block text-gray-700 font-medium mb-2 text-sm sm:text-base">Name <span
+                        class="text-red-500">*</span></label>
+                <input type="text" name="name" value="{{ old('name', $user['name']) }}"
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 text-sm sm:text-base"
+                    required>
+                @error('name')<p class="text-red-500 text-sm mt-1">{{ $message }}</p>@enderror
+            </div>
+
+            <div>
+                <label class="block text-gray-700 font-medium mb-2 text-sm sm:text-base">Email <span
+                        class="text-red-500">*</span></label>
+                <input type="email" name="email" value="{{ old('email', $user['email']) }}"
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 text-sm sm:text-base"
+                    required>
+                @error('email')<p class="text-red-500 text-sm mt-1">{{ $message }}</p>@enderror
+            </div>
+
+            <div>
+                <label class="block text-gray-700 font-medium mb-2 text-sm sm:text-base">Role <span
+                        class="text-red-500">*</span></label>
+                <select name="role"
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 text-sm sm:text-base"
+                    required>
+                    <option value="admin" {{ old('role', $user['role']) == 'admin' ? 'selected' : '' }}>Admin</option>
+                    <option value="operator" {{ old('role', $user['role']) == 'operator' ? 'selected' : '' }}>Operator
+                    </option>
+                    <option value="employee" {{ old('role', $user['role']) == 'employee' ? 'selected' : '' }}>Employee
+                    </option>
+                </select>
+                @error('role')<p class="text-red-500 text-sm mt-1">{{ $message }}</p>@enderror
+            </div>
+
+            <div class="border-t pt-4">
+                <p class="text-sm text-gray-600 mb-3">Biarkan kosong jika tidak ingin mengubah password</p>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 font-medium mb-2 text-sm sm:text-base">Password Baru</label>
+                    <input type="password" name="password"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 text-sm sm:text-base">
+                    @error('password')<p class="text-red-500 text-sm mt-1">{{ $message }}</p>@enderror
+                </div>
+
+                <div>
+                    <label class="block text-gray-700 font-medium mb-2 text-sm sm:text-base">Confirm Password</label>
+                    <input type="password" name="password_confirmation"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 text-sm sm:text-base">
+                </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-3 pt-4">
+                <button type="submit"
+                    class="flex-1 px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition text-sm sm:text-base">
+                    <i class="fas fa-save mr-2"></i>Update User
+                </button>
+                <a href="{{ route('admin.users.index') }}"
+                    class="flex-1 text-center px-6 py-3 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition text-sm sm:text-base">
+                    <i class="fas fa-times mr-2"></i>Batal
+                </a>
+            </div>
+        </form>
     </div>
 </div>
 @endsection
