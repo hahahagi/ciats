@@ -155,7 +155,7 @@
 
         <!-- Footer -->
         <p class="text-center text-white text-sm mt-6">
-            © 2024 CIATS - Corporate IT Asset Tracking System
+            © 2025 CIATS - Corporate IT Asset Tracking System
         </p>
     </div>
 
