@@ -8,17 +8,41 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
     @media print {
+        @page {
+            size: auto;
+            margin: 0mm;
+        }
+
         .no-print {
-            display: none;
+            display: none !important;
         }
 
         body {
             margin: 0;
-            padding: 20px;
+            padding: 0;
+            background: white;
         }
 
         .print-area {
+            width: 100%;
+            /* Use slightly less than 100vh to avoid accidental spillover */
+            min-height: 95vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
             page-break-inside: avoid;
+            box-shadow: none !important;
+            padding: 20px !important; /* Override p-12 */
+        }
+
+        /* Reset shadow and max-width for print */
+        .shadow-xl {
+            box-shadow: none !important;
+        }
+        .max-w-4xl {
+            max-width: none !important;
+            margin: 0 !important;
         }
     }
     </style>
@@ -35,16 +59,24 @@
                 Kembali ke Detail Aset
             </a>
 
-            <button onclick="window.print()"
-                class="px-6 py-3 bg-gradient-to-r from-purple-600 to-purple-700 text-white font-semibold rounded-lg hover:shadow-lg transition">
-                <i class="fas fa-print mr-2"></i>
-                Print QR Code
-            </button>
+            <div class="flex gap-3">
+                <button onclick="downloadJPG()"
+                    class="px-6 py-3 bg-white border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition">
+                    <i class="fas fa-image mr-2"></i>
+                    Download JPG
+                </button>
+
+                <button onclick="window.print()"
+                    class="px-6 py-3 bg-gradient-to-r from-purple-600 to-purple-700 text-white font-semibold rounded-lg hover:shadow-lg transition">
+                    <i class="fas fa-print mr-2"></i>
+                    Print PDF
+                </button>
+            </div>
         </div>
     </div>
 
     <!-- Print Area -->
-    <div class="max-w-4xl mx-auto bg-white shadow-xl">
+    <div id="printArea" class="max-w-4xl mx-auto bg-white shadow-xl">
 
         <!-- Single QR Label (Full Page) -->
         <div class="print-area p-12 text-center">
@@ -58,7 +90,7 @@
             <!-- QR Code -->
             <div class="mb-8">
                 @if(!empty($asset['qr_code_url']))
-                <img src="{{ $asset['qr_code_url'] }}" alt="QR Code" class="mx-auto"
+                <img id="qrImage" src="{{ $asset['qr_code_url'] }}" alt="QR Code" class="mx-auto"
                     style="width: 300px; height: 300px;">
                 @else
                 <div class="w-72 h-72 mx-auto bg-gray-200 rounded-lg flex items-center justify-center">
@@ -109,13 +141,13 @@
             <div class="print-area border-2 border-dashed border-gray-300 p-6 text-center">
                 <div class="mb-3">
                     @if(!empty($asset['qr_code_url']))
-                    <img src="{{ $asset['qr_code_url'] }}" 
-                         alt="QR Code" 
+                    <img src="{{ $asset['qr_code_url'] }}"
+                         alt="QR Code"
                          class="mx-auto"
                          style="width: 150px; height: 150px;">
                     @endif
                 </div>
-                
+
                 <p class="font-bold text-sm mb-1">{{ $asset['name'] ?? 'Unknown' }}</p>
                 <p class="text-xs font-mono text-gray-600">{{ $asset['serial_number'] ?? '-' }}</p>
             </div>
@@ -167,7 +199,106 @@
         </div>
     </div>
 
+    <!-- Hidden Capture Area for JPG -->
+    <div id="jpgCaptureArea" style="position: absolute; left: -9999px; top: 0; width: 400px; background: white; padding: 20px; border-radius: 12px; text-align: center; font-family: sans-serif;">
+        <div style="border: 2px solid #e5e7eb; border-radius: 12px; padding: 24px; background: white;">
+            <h2 style="font-size: 24px; font-weight: bold; color: #1f2937; margin-bottom: 4px;">CIATS</h2>
+            <p style="color: #6b7280; font-size: 12px; margin-bottom: 20px;">Corporate IT Asset Tracking System</p>
+
+            <div style="margin-bottom: 20px; display: flex; justify-content: center;">
+                @if(!empty($asset['qr_code_url']))
+                <img src="{{ $asset['qr_code_url'] }}" alt="QR Code" style="width: 200px; height: 200px;">
+                @else
+                <div style="width: 200px; height: 200px; background: #e5e7eb; display: flex; align-items: center; justify-content: center; margin: 0 auto;">
+                    <span style="color: #9ca3af;">No QR</span>
+                </div>
+                @endif
+            </div>
+
+            <div style="text-align: left; background: #f9fafb; padding: 16px; border-radius: 8px; margin-bottom: 16px;">
+                <div style="margin-bottom: 12px;">
+                    <p style="font-size: 10px; color: #6b7280; margin-bottom: 2px;">Asset Name</p>
+                    <p style="font-size: 16px; font-weight: bold; color: #1f2937; margin: 0;">{{ $asset['name'] ?? 'Unknown Asset' }}</p>
+                </div>
+                <div>
+                    <p style="font-size: 10px; color: #6b7280; margin-bottom: 2px;">Serial Number</p>
+                    <p style="font-size: 14px; font-family: monospace; font-weight: bold; color: #1f2937; margin: 0;">{{ $asset['serial_number'] ?? '-' }}</p>
+                </div>
+            </div>
+
+            <div style="font-size: 10px; color: #9ca3af; border-top: 1px solid #e5e7eb; padding-top: 12px;">
+                Generated: {{ date('d M Y') }}
+            </div>
+        </div>
+    </div>
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+
+    <script>
+    function downloadJPG() {
+        // Use the dedicated capture area
+        const captureArea = document.getElementById('jpgCaptureArea');
+
+        if (!captureArea) {
+            alert('Area capture tidak ditemukan!');
+            return;
+        }
+
+        // Show loading state
+        const btn = document.querySelector('button[onclick="downloadJPG()"]');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Generating...';
+        btn.disabled = true;
+
+        // Ensure html2canvas is loaded
+        if (typeof html2canvas === 'undefined') {
+            alert('Library html2canvas belum siap. Mohon tunggu sebentar atau refresh halaman.');
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+            return;
+        }
+
+        // Move the capture area to the visible viewport temporarily to ensure rendering
+        // But keep it hidden from user flow if possible, or just use the off-screen positioning
+        // html2canvas works best if the element is in the DOM.
+        // It is already in the DOM (absolute positioned off-screen).
+
+        html2canvas(captureArea, {
+            scale: 3, // High quality
+            backgroundColor: null, // Transparent background for the canvas itself (element has white)
+            useCORS: true,
+            logging: false,
+            allowTaint: true,
+            windowWidth: 500, // Force a width context
+        }).then(canvas => {
+            try {
+                // Convert to JPG
+                const jpgUrl = canvas.toDataURL('image/jpeg', 0.95);
+
+                // Trigger download
+                const link = document.createElement('a');
+                link.download = 'Asset-{{ $asset["serial_number"] ?? "QR" }}.jpg';
+                link.href = jpgUrl;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } catch (e) {
+                console.error('Error saving image:', e);
+                alert('Gagal menyimpan gambar: ' + e.message);
+            }
+
+            // Restore button
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }).catch(err => {
+            console.error('Error generating JPG:', err);
+            alert('Gagal membuat gambar JPG: ' + err.message);
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        });
+    }
+    </script>
 </body>
 
 </html>

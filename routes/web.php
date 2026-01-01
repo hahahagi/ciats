@@ -5,6 +5,10 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\AssetController;
 use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\LocationController;
+
+use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\ReportController;
 
 /*
 |--------------------------------------------------------------------------
@@ -44,6 +48,30 @@ Route::prefix('assets')->group(function () {
 });
 
 // =======================
+// Category Routes
+// =======================
+Route::prefix('categories')->group(function () {
+    Route::get('/', [CategoryController::class, 'index'])->name('categories.index');
+    Route::get('/create', [CategoryController::class, 'create'])->name('categories.create');
+    Route::post('/', [CategoryController::class, 'store'])->name('categories.store');
+    Route::get('/{id}/edit', [CategoryController::class, 'edit'])->name('categories.edit');
+    Route::put('/{id}', [CategoryController::class, 'update'])->name('categories.update');
+    Route::delete('/{id}', [CategoryController::class, 'destroy'])->name('categories.destroy');
+});
+
+// =======================
+// Location Routes
+// =======================
+Route::prefix('locations')->group(function () {
+    Route::get('/', [LocationController::class, 'index'])->name('locations.index');
+    Route::get('/create', [LocationController::class, 'create'])->name('locations.create');
+    Route::post('/', [LocationController::class, 'store'])->name('locations.store');
+    Route::get('/{id}/edit', [LocationController::class, 'edit'])->name('locations.edit');
+    Route::put('/{id}', [LocationController::class, 'update'])->name('locations.update');
+    Route::delete('/{id}', [LocationController::class, 'destroy'])->name('locations.destroy');
+});
+
+// =======================
 // Transaction Routes
 // =======================
 Route::prefix('transactions')->group(function () {
@@ -68,6 +96,14 @@ Route::prefix('transactions')->group(function () {
 
     // Admin Only
     Route::get('/all', [TransactionController::class, 'allTransactions'])->name('transactions.allTransactions');
+});
+
+// =======================
+// Report Routes
+// =======================
+Route::prefix('reports')->group(function () {
+    Route::get('/', [ReportController::class, 'index'])->name('reports.index');
+    Route::post('/generate', [ReportController::class, 'generate'])->name('reports.generate');
 });
 
 // =======================

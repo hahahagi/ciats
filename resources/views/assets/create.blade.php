@@ -51,14 +51,11 @@
                         class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition capitalize"
                         required>
                         <option value="">Pilih Kategori</option>
-                        <option value="laptop" {{ old('category') == 'laptop' ? 'selected' : '' }}>Laptop</option>
-                        <option value="monitor" {{ old('category') == 'monitor' ? 'selected' : '' }}>Monitor</option>
-                        <option value="keyboard" {{ old('category') == 'keyboard' ? 'selected' : '' }}>Keyboard</option>
-                        <option value="mouse" {{ old('category') == 'mouse' ? 'selected' : '' }}>Mouse</option>
-                        <option value="printer" {{ old('category') == 'printer' ? 'selected' : '' }}>Printer</option>
-                        <option value="scanner" {{ old('category') == 'scanner' ? 'selected' : '' }}>Scanner</option>
-                        <option value="projector" {{ old('category') == 'projector' ? 'selected' : '' }}>Projector
-                        </option>
+                        @foreach($categories as $cat)
+                            <option value="{{ $cat['slug'] ?? $cat['name'] }}" {{ old('category') == ($cat['slug'] ?? $cat['name']) ? 'selected' : '' }}>
+                                {{ $cat['name'] }}
+                            </option>
+                        @endforeach
                         <option value="other" {{ old('category') == 'other' ? 'selected' : '' }}>Lainnya</option>
                     </select>
                     @error('category')

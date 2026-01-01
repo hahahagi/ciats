@@ -18,7 +18,7 @@ class TransactionController extends Controller
             ->withDatabaseUri(config('firebase.database.url'));
 
         $this->database = $factory->createDatabase();
-        
+
         $this->middleware(function ($request, $next) {
             if (!Session::has('user')) {
                 return redirect('/login');
@@ -37,11 +37,11 @@ class TransactionController extends Controller
     public function catalog()
     {
         $user = Session::get('user');
-        
+
         // Ambil assets yang available saja
         $assetsRef = $this->database->getReference('assets')->getValue();
         $availableAssets = [];
-        
+
         if ($assetsRef) {
             foreach ($assetsRef as $id => $asset) {
                 if (($asset['status'] ?? '') == 'available') {
@@ -50,7 +50,7 @@ class TransactionController extends Controller
                 }
             }
         }
-        
+
         // Group by category
         $categories = [];
         foreach ($availableAssets as $asset) {
@@ -61,8 +61,29 @@ class TransactionController extends Controller
             $categories[$category][] = $asset;
         }
 
+        // Calculate user stats
+        $stats = [
+            'my_active' => 0,
+            'my_pending' => 0,
+        ];
+
+        $transactionsRef = $this->database->getReference('transactions')->getValue();
+        if ($transactionsRef) {
+            foreach ($transactionsRef as $transaction) {
+                if (($transaction['user_id'] ?? '') == $user['id']) {
+                    $status = $transaction['status'] ?? '';
+                    if ($status == 'active') {
+                        $stats['my_active']++;
+                    } elseif ($status == 'waiting_approval') {
+                        $stats['my_pending']++;
+                    }
+                }
+            }
+        }
+
         return view('transactions.catalog', [
             'categories' => $categories,
+            'stats' => $stats,
             'user' => $user,
             'title' => 'Katalog Aset'
         ]);
@@ -72,9 +93,9 @@ class TransactionController extends Controller
     public function requestForm($assetId)
     {
         $user = Session::get('user');
-        
+
         $asset = $this->database->getReference("assets/{$assetId}")->getValue();
-        
+
         if (!$asset || ($asset['status'] ?? '') != 'available') {
             return redirect()->route('transactions.catalog')
                 ->with('error', 'Aset tidak tersedia untuk dipinjam.');
@@ -96,7 +117,7 @@ class TransactionController extends Controller
     public function submitRequest(Request $request)
     {
         $user = Session::get('user');
-        
+
         $request->validate([
             'asset_id' => 'required',
             'purpose' => 'required|string|min:10|max:500',
@@ -157,10 +178,10 @@ class TransactionController extends Controller
     public function myRequests()
     {
         $user = Session::get('user');
-        
+
         $transactionsRef = $this->database->getReference('transactions')->getValue();
         $myTransactions = [];
-        
+
         if ($transactionsRef) {
             foreach ($transactionsRef as $id => $transaction) {
                 if (($transaction['user_id'] ?? '') == $user['id']) {
@@ -169,9 +190,9 @@ class TransactionController extends Controller
                 }
             }
         }
-        
+
         // Sort by requested_at (newest first)
-        usort($myTransactions, function($a, $b) {
+        usort($myTransactions, function ($a, $b) {
             return ($b['requested_at'] ?? 0) <=> ($a['requested_at'] ?? 0);
         });
 
@@ -192,7 +213,7 @@ class TransactionController extends Controller
     public function pendingApprovals()
     {
         $user = Session::get('user');
-        
+
         // Hanya operator dan admin yang bisa akses
         if (!in_array($user['role'], ['operator', 'admin'])) {
             abort(403, 'Hanya operator dan admin yang bisa mengakses.');
@@ -200,18 +221,40 @@ class TransactionController extends Controller
 
         $transactionsRef = $this->database->getReference('transactions')->getValue();
         $pendingTransactions = [];
-        
+        $stats = [
+            'approved_week' => 0,
+            'rejected_week' => 0,
+        ];
+
+        $oneWeekAgo = time() - (7 * 24 * 60 * 60);
+
         if ($transactionsRef) {
             foreach ($transactionsRef as $id => $transaction) {
-                if (($transaction['status'] ?? '') == 'waiting_approval') {
+                $status = $transaction['status'] ?? '';
+                $processedAt = $transaction['approved_at'] ?? 0;
+
+                // Filter pending transactions for list
+                if ($status == 'waiting_approval') {
                     $transaction['id'] = $id;
                     $pendingTransactions[] = $transaction;
+                }
+
+                // Calculate stats
+                if ($processedAt >= $oneWeekAgo) {
+                    if ($status == 'rejected') {
+                        $stats['rejected_week']++;
+                    } else {
+                        // Count as approved if it has a processed date and is not rejected
+                        // This includes: approved, active, completed
+                        $stats['approved_week']++;
+                    }
                 }
             }
         }
 
         return view('transactions.pending-approvals', [
             'transactions' => $pendingTransactions,
+            'stats' => $stats,
             'user' => $user,
             'title' => 'Persetujuan Peminjaman'
         ]);
@@ -221,13 +264,13 @@ class TransactionController extends Controller
     public function approve($id)
     {
         $user = Session::get('user');
-        
+
         if (!in_array($user['role'], ['operator', 'admin'])) {
             abort(403, 'Hanya operator dan admin yang bisa approve.');
         }
 
         $transaction = $this->database->getReference("transactions/{$id}")->getValue();
-        
+
         if (!$transaction || ($transaction['status'] ?? '') != 'waiting_approval') {
             return redirect()->route('transactions.pendingApprovals')
                 ->with('error', 'Transaksi tidak ditemukan atau sudah diproses.');
@@ -249,7 +292,7 @@ class TransactionController extends Controller
     public function reject(Request $request, $id)
     {
         $user = Session::get('user');
-        
+
         if (!in_array($user['role'], ['operator', 'admin'])) {
             abort(403, 'Hanya operator dan admin yang bisa reject.');
         }
@@ -259,7 +302,7 @@ class TransactionController extends Controller
         ]);
 
         $transaction = $this->database->getReference("transactions/{$id}")->getValue();
-        
+
         if (!$transaction) {
             return back()->with('error', 'Transaksi tidak ditemukan.');
         }
@@ -291,13 +334,13 @@ class TransactionController extends Controller
     public function checkoutForm($transactionId)
     {
         $user = Session::get('user');
-        
+
         if (!in_array($user['role'], ['operator', 'admin'])) {
             abort(403, 'Hanya operator dan admin yang bisa checkout.');
         }
 
         $transaction = $this->database->getReference("transactions/{$transactionId}")->getValue();
-        
+
         if (!$transaction || ($transaction['status'] ?? '') != 'approved') {
             return redirect()->route('dashboard')
                 ->with('error', 'Transaksi tidak ditemukan atau belum disetujui.');
@@ -318,7 +361,7 @@ class TransactionController extends Controller
     public function processCheckout(Request $request, $transactionId)
     {
         $user = Session::get('user');
-        
+
         if (!in_array($user['role'], ['operator', 'admin'])) {
             abort(403, 'Hanya operator dan admin yang bisa checkout.');
         }
@@ -329,7 +372,7 @@ class TransactionController extends Controller
         ]);
 
         $transaction = $this->database->getReference("transactions/{$transactionId}")->getValue();
-        
+
         if (!$transaction || ($transaction['status'] ?? '') != 'approved') {
             return back()->with('error', 'Transaksi tidak valid.');
         }
@@ -363,13 +406,13 @@ class TransactionController extends Controller
     public function checkinForm($transactionId)
     {
         $user = Session::get('user');
-        
+
         if (!in_array($user['role'], ['operator', 'admin'])) {
             abort(403, 'Hanya operator dan admin yang bisa checkin.');
         }
 
         $transaction = $this->database->getReference("transactions/{$transactionId}")->getValue();
-        
+
         if (!$transaction || ($transaction['status'] ?? '') != 'active') {
             return redirect()->route('dashboard')
                 ->with('error', 'Transaksi tidak ditemukan atau belum aktif.');
@@ -390,7 +433,7 @@ class TransactionController extends Controller
     public function processCheckin(Request $request, $transactionId)
     {
         $user = Session::get('user');
-        
+
         if (!in_array($user['role'], ['operator', 'admin'])) {
             abort(403, 'Hanya operator dan admin yang bisa checkin.');
         }
@@ -401,7 +444,7 @@ class TransactionController extends Controller
         ]);
 
         $transaction = $this->database->getReference("transactions/{$transactionId}")->getValue();
-        
+
         if (!$transaction || ($transaction['status'] ?? '') != 'active') {
             return back()->with('error', 'Transaksi tidak valid.');
         }
@@ -437,25 +480,46 @@ class TransactionController extends Controller
     public function activeLoans()
     {
         $user = Session::get('user');
-        
+
         if (!in_array($user['role'], ['operator', 'admin'])) {
             abort(403, 'Hanya operator dan admin yang bisa melihat.');
         }
 
         $transactionsRef = $this->database->getReference('transactions')->getValue();
         $activeTransactions = [];
-        
+        $stats = [
+            'due_today' => 0,
+            'overdue' => 0,
+            'on_time' => 0,
+        ];
+
+        $now = time();
+        $startOfDay = strtotime("today", $now);
+        $endOfDay = strtotime("tomorrow", $now) - 1;
+
         if ($transactionsRef) {
             foreach ($transactionsRef as $id => $transaction) {
                 if (($transaction['status'] ?? '') == 'active') {
                     $transaction['id'] = $id;
                     $activeTransactions[] = $transaction;
+
+                    // Calculate stats
+                    $expectedReturn = $transaction['expected_return_date'] ?? 0;
+
+                    if ($expectedReturn < $startOfDay) {
+                        $stats['overdue']++;
+                    } elseif ($expectedReturn >= $startOfDay && $expectedReturn <= $endOfDay) {
+                        $stats['due_today']++;
+                    } else {
+                        $stats['on_time']++;
+                    }
                 }
             }
         }
 
         return view('transactions.active-loans', [
             'transactions' => $activeTransactions,
+            'stats' => $stats,
             'user' => $user,
             'title' => 'Peminjaman Aktif'
         ]);
@@ -471,23 +535,23 @@ class TransactionController extends Controller
     public function allTransactions()
     {
         $user = Session::get('user');
-        
+
         if ($user['role'] != 'admin') {
             abort(403, 'Hanya admin yang bisa melihat semua transaksi.');
         }
 
         $transactionsRef = $this->database->getReference('transactions')->getValue();
         $allTransactions = [];
-        
+
         if ($transactionsRef) {
             foreach ($transactionsRef as $id => $transaction) {
                 $transaction['id'] = $id;
                 $allTransactions[] = $transaction;
             }
         }
-        
+
         // Sort by requested_at (newest first)
-        usort($allTransactions, function($a, $b) {
+        usort($allTransactions, function ($a, $b) {
             return ($b['requested_at'] ?? 0) <=> ($a['requested_at'] ?? 0);
         });
 
@@ -508,46 +572,128 @@ class TransactionController extends Controller
     public function scanner()
     {
         $user = Session::get('user');
-        
+
         if (!in_array($user['role'], ['operator', 'admin'])) {
             abort(403, 'Hanya operator dan admin yang bisa menggunakan scanner.');
         }
 
+        // Ambil transaksi terakhir sebagai "Recent Activity"
+        // Menggunakan orderByKey().limitToLast(10) untuk menghindari error "Index not defined" pada updated_at
+        $transactionsRef = $this->database->getReference('transactions')
+            ->orderByKey()
+            ->limitToLast(10)
+            ->getValue();
+
+        $recentTransactions = [];
+        if ($transactionsRef) {
+            foreach ($transactionsRef as $id => $tx) {
+                $tx['id'] = $id;
+                $recentTransactions[] = $tx;
+            }
+            // Sort descending (newest first) by updated_at in PHP
+            usort($recentTransactions, function ($a, $b) {
+                return ($b['updated_at'] ?? 0) <=> ($a['updated_at'] ?? 0);
+            });
+
+            // Ambil 5 teratas setelah sorting
+            $recentTransactions = array_slice($recentTransactions, 0, 5);
+        }
+
         return view('scanner.index', [
             'user' => $user,
-            'title' => 'QR Code Scanner'
+            'title' => 'QR Code Scanner',
+            'recentTransactions' => $recentTransactions
         ]);
     }
 
     // 2. Handle scan result
     public function handleScan(Request $request)
     {
-        $user = Session::get('user');
-        
-        if (!in_array($user['role'], ['operator', 'admin'])) {
-            return response()->json(['error' => 'Unauthorized'], 403);
-        }
+        try {
+            $user = Session::get('user');
 
-        $scanData = json_decode($request->input('data'), true);
-        
-        if (!$scanData || !isset($scanData['type'])) {
-            return response()->json(['error' => 'Invalid QR code'], 400);
-        }
-
-        if ($scanData['type'] == 'asset') {
-            $assetId = $scanData['id'] ?? '';
-            $asset = $this->database->getReference("assets/{$assetId}")->getValue();
-            
-            if ($asset) {
-                return response()->json([
-                    'type' => 'asset',
-                    'asset' => $asset,
-                    'assetId' => $assetId,
-                    'redirect_url' => route('assets.show', $assetId)
-                ]);
+            if (!in_array($user['role'], ['operator', 'admin'])) {
+                return response()->json(['error' => 'Unauthorized'], 403);
             }
-        }
 
-        return response()->json(['error' => 'Data tidak ditemukan'], 404);
+            $rawData = $request->input('data');
+
+            // Try to decode JSON
+            $scanData = json_decode($rawData, true);
+
+            // If not JSON, maybe it's a direct URL or string?
+            // For now, we expect JSON as per the user's phone scanner output.
+            // But let's handle the case where it's just a string (maybe a serial number?)
+            if (!$scanData) {
+                // Attempt to treat the raw data as a serial number if it looks like one
+                // This is a fallback for non-JSON QR codes
+                $scanData = ['type' => 'asset', 'serial' => $rawData];
+            }
+
+            if (!isset($scanData['type'])) {
+                // If we decoded JSON but it doesn't have 'type', maybe it's just the serial?
+                if (isset($scanData['serial'])) {
+                    $scanData['type'] = 'asset';
+                } else {
+                    return response()->json(['error' => 'Invalid QR code format'], 400);
+                }
+            }
+
+            if ($scanData['type'] == 'asset') {
+                $assetId = $scanData['id'] ?? null;
+                $serialNumber = $scanData['serial'] ?? null;
+
+                $asset = null;
+
+                // Jika ada ID, cari by ID
+                if ($assetId) {
+                    $asset = $this->database->getReference("assets/{$assetId}")->getValue();
+                }
+
+                // Jika tidak ada ID (atau ID tidak ketemu) tapi ada Serial, cari by Serial
+                if (!$asset && $serialNumber) {
+                    // FIX: Menggunakan orderByChild memerlukan index di Firebase Rules (".indexOn": "serial_number")
+                    // Kita gunakan fallback: ambil semua assets dan filter di PHP untuk menghindari error "Index not defined".
+
+                    try {
+                        // Cara 1: Coba query standard (akan gagal jika index belum ada)
+                        $assets = $this->database->getReference('assets')
+                            ->orderByChild('serial_number')
+                            ->equalTo($serialNumber)
+                            ->getValue();
+
+                        if ($assets) {
+                            $assetId = array_key_first($assets);
+                            $asset = $assets[$assetId];
+                        }
+                    } catch (\Exception $e) {
+                        // Cara 2: Fallback manual filter (lebih lambat tapi pasti jalan tanpa index)
+                        $allAssets = $this->database->getReference('assets')->getValue();
+                        if ($allAssets) {
+                            foreach ($allAssets as $key => $val) {
+                                if (isset($val['serial_number']) && (string)$val['serial_number'] === (string)$serialNumber) {
+                                    $asset = $val;
+                                    $assetId = $key;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if ($asset && $assetId) {
+                    return response()->json([
+                        'type' => 'asset',
+                        'asset' => $asset,
+                        'assetId' => $assetId,
+                        'redirect_url' => route('assets.show', $assetId)
+                    ]);
+                }
+            }
+
+            return response()->json(['error' => 'Data aset tidak ditemukan'], 404);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Server Error: ' . $e->getMessage()], 500);
+        }
     }
 }

@@ -183,28 +183,28 @@
             <!-- Timeline -->
             <div class="flex items-center space-x-2 text-sm">
                 <!-- Requested -->
-                <div class="flex items-center {{ $tx['requested_at'] ? 'text-green-600' : 'text-gray-400' }}">
+                <div class="flex items-center {{ ($tx['requested_at'] ?? false) ? 'text-green-600' : 'text-gray-400' }}">
                     <i class="fas fa-check-circle mr-1"></i>
                     <span>Requested</span>
                 </div>
-                <div class="flex-1 h-1 {{ $tx['approved_at'] ? 'bg-green-500' : 'bg-gray-300' }} rounded"></div>
+                <div class="flex-1 h-1 {{ ($tx['approved_at'] ?? false) ? 'bg-green-500' : 'bg-gray-300' }} rounded"></div>
 
                 <!-- Approved -->
-                <div class="flex items-center {{ $tx['approved_at'] ? 'text-green-600' : 'text-gray-400' }}">
-                    <i class="fas fa-{{ $tx['status'] == 'rejected' ? 'times' : 'check' }}-circle mr-1"></i>
-                    <span>{{ $tx['status'] == 'rejected' ? 'Rejected' : 'Approved' }}</span>
+                <div class="flex items-center {{ ($tx['approved_at'] ?? false) ? 'text-green-600' : 'text-gray-400' }}">
+                    <i class="fas fa-{{ ($tx['status'] ?? '') == 'rejected' ? 'times' : 'check' }}-circle mr-1"></i>
+                    <span>{{ ($tx['status'] ?? '') == 'rejected' ? 'Rejected' : 'Approved' }}</span>
                 </div>
-                <div class="flex-1 h-1 {{ $tx['checkout_at'] ? 'bg-blue-500' : 'bg-gray-300' }} rounded"></div>
+                <div class="flex-1 h-1 {{ ($tx['checkout_at'] ?? false) ? 'bg-blue-500' : 'bg-gray-300' }} rounded"></div>
 
                 <!-- Checkout -->
-                <div class="flex items-center {{ $tx['checkout_at'] ? 'text-blue-600' : 'text-gray-400' }}">
+                <div class="flex items-center {{ ($tx['checkout_at'] ?? false) ? 'text-blue-600' : 'text-gray-400' }}">
                     <i class="fas fa-hand-holding mr-1"></i>
                     <span>Checkout</span>
                 </div>
-                <div class="flex-1 h-1 {{ $tx['checkin_at'] ? 'bg-gray-500' : 'bg-gray-300' }} rounded"></div>
+                <div class="flex-1 h-1 {{ ($tx['checkin_at'] ?? false) ? 'bg-gray-500' : 'bg-gray-300' }} rounded"></div>
 
                 <!-- Checkin -->
-                <div class="flex items-center {{ $tx['checkin_at'] ? 'text-gray-600' : 'text-gray-400' }}">
+                <div class="flex items-center {{ ($tx['checkin_at'] ?? false) ? 'text-gray-600' : 'text-gray-400' }}">
                     <i class="fas fa-check-double mr-1"></i>
                     <span>Returned</span>
                 </div>

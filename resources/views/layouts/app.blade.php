@@ -7,6 +7,7 @@
     <title>{{ $title ?? 'CIATS' }} - Corporate IT Asset Tracking</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
@@ -174,6 +175,19 @@
                         <i class="fas fa-boxes text-xl"></i>
                         <span>Daftar Aset</span>
                     </a>
+
+                    @if(in_array($user['role'] ?? '', ['operator', 'admin']))
+                    <a href="{{ route('categories.index') }}"
+                        class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg mb-2 text-white {{ request()->routeIs('categories.*') ? 'active' : '' }}">
+                        <i class="fas fa-tags text-xl"></i>
+                        <span>Kelola Kategori</span>
+                    </a>
+                    <a href="{{ route('locations.index') }}"
+                        class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg mb-2 text-white {{ request()->routeIs('locations.*') ? 'active' : '' }}">
+                        <i class="fas fa-map-marker-alt text-xl"></i>
+                        <span>Kelola Lokasi</span>
+                    </a>
+                    @endif
                 </div>
 
                 <!-- Transactions -->
@@ -195,14 +209,28 @@
 
                     @if(in_array($user['role'] ?? '', ['operator', 'admin']))
                     <a href="{{ route('transactions.pendingApprovals') }}"
-                        class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg mb-2 text-white {{ request()->routeIs('transactions.pendingApprovals') ? 'active' : '' }}">
-                        <i class="fas fa-clock text-xl"></i>
-                        <span>Persetujuan</span>
+                        class="sidebar-link flex items-center justify-between px-4 py-3 rounded-lg mb-2 text-white {{ request()->routeIs('transactions.pendingApprovals') ? 'active' : '' }}">
+                        <div class="flex items-center space-x-3">
+                            <i class="fas fa-clock text-xl"></i>
+                            <span>Persetujuan</span>
+                        </div>
+                        @if(($globalCounts['pending'] ?? 0) > 0)
+                        <span class="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-sm animate-pulse">
+                            {{ $globalCounts['pending'] }}
+                        </span>
+                        @endif
                     </a>
                     <a href="{{ route('transactions.activeLoans') }}"
-                        class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg mb-2 text-white {{ request()->routeIs('transactions.activeLoans') ? 'active' : '' }}">
-                        <i class="fas fa-exchange-alt text-xl"></i>
-                        <span>Peminjaman Aktif</span>
+                        class="sidebar-link flex items-center justify-between px-4 py-3 rounded-lg mb-2 text-white {{ request()->routeIs('transactions.activeLoans') ? 'active' : '' }}">
+                        <div class="flex items-center space-x-3">
+                            <i class="fas fa-exchange-alt text-xl"></i>
+                            <span>Peminjaman Aktif</span>
+                        </div>
+                        @if(($globalCounts['active'] ?? 0) > 0)
+                        <span class="bg-blue-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-sm">
+                            {{ $globalCounts['active'] }}
+                        </span>
+                        @endif
                     </a>
                     @endif
 
@@ -211,6 +239,14 @@
                         class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg mb-2 text-white {{ request()->routeIs('transactions.allTransactions') ? 'active' : '' }}">
                         <i class="fas fa-list text-xl"></i>
                         <span>Semua Transaksi</span>
+                    </a>
+                    @endif
+
+                    @if(in_array($user['role'] ?? '', ['operator', 'admin']))
+                    <a href="{{ route('reports.index') }}"
+                        class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg mb-2 text-white {{ request()->routeIs('reports.*') ? 'active' : '' }}">
+                        <i class="fas fa-file-alt text-xl"></i>
+                        <span>Laporan</span>
                     </a>
                     @endif
                 </div>
@@ -277,6 +313,14 @@
                         <span>Tambah Aset</span>
                     </a>
                     @endif
+
+                    @if(in_array($user['role'] ?? '', ['operator', 'admin']))
+                    <a href="{{ route('locations.index') }}"
+                        class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg mb-2 text-white {{ request()->routeIs('locations.*') ? 'active' : '' }}">
+                        <i class="fas fa-map-marker-alt text-xl w-6"></i>
+                        <span>Kelola Lokasi</span>
+                    </a>
+                    @endif
                 </div>
 
                 <div class="mt-4">
@@ -341,24 +385,7 @@
 
         <!-- Main Content -->
         <main class="flex-1 p-4 sm:p-6 lg:ml-64">
-            <!-- Alerts -->
-            @if(session('success'))
-            <div class="alert-slide bg-green-50 border-l-4 border-green-500 text-green-700 p-4 mb-6 rounded-lg shadow">
-                <div class="flex items-center">
-                    <i class="fas fa-check-circle mr-3 text-xl"></i>
-                    <p>{{ session('success') }}</p>
-                </div>
-            </div>
-            @endif
-
-            @if(session('error'))
-            <div class="alert-slide bg-red-50 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded-lg shadow">
-                <div class="flex items-center">
-                    <i class="fas fa-exclamation-circle mr-3 text-xl"></i>
-                    <p>{{ session('error') }}</p>
-                </div>
-            </div>
-            @endif
+            <!-- Alerts handled by SweetAlert2 now -->
 
             @if($errors->any())
             <div class="alert-slide bg-red-50 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded-lg shadow">
@@ -380,6 +407,25 @@
     </div>
 
     <script>
+    // SweetAlert2 for Session Flash Messages
+    @if(session('success'))
+        Swal.fire({
+            icon: 'success',
+            title: 'Berhasil!',
+            text: "{{ session('success') }}",
+            timer: 3000,
+            showConfirmButton: false
+        });
+    @endif
+
+    @if(session('error'))
+        Swal.fire({
+            icon: 'error',
+            title: 'Gagal!',
+            text: "{{ session('error') }}",
+        });
+    @endif
+
     function toggleMobileSidebar() {
         const sidebar = document.getElementById('mobileSidebar');
         const overlay = document.getElementById('mobileOverlay');
@@ -397,7 +443,7 @@
     document.addEventListener('click', function(event) {
         const dropdown = document.getElementById('profileDropdown');
         const profileBtn = event.target.closest('button[onclick="toggleProfileDropdown()"]');
-        
+
         if (!profileBtn && !dropdown.contains(event.target)) {
             dropdown.classList.add('hidden');
         }

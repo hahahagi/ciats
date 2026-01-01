@@ -1,30 +1,4 @@
-{{-- CREATE: assets/create.blade.php --}}
-@extends('layouts.app')
 
-@section('content')
-<div class="max-w-4xl mx-auto">
-
-    <!-- Back Button -->
-    <a href="{{ route('assets.index') }}" class="inline-flex items-center text-purple-600 hover:text-purple-700 mb-6">
-        <i class="fas fa-arrow-left mr-2"></i>
-        Kembali ke Daftar Aset
-    </a>
-
-    <!-- Form Card -->
-    <div class="bg-white rounded-xl shadow-xl p-8">
-        <div class="flex items-center space-x-3 mb-6">
-            <div class="bg-purple-100 p-3 rounded-lg">
-                <i class="fas fa-plus-circle text-purple-600 text-2xl"></i>
-            </div>
-            <div>
-                <h1 class="text-2xl font-bold text-gray-800">Tambah Aset Baru</h1>
-                <p class="text-gray-600">Lengkapi informasi aset yang akan ditambahkan</p>
-            </div>
-        </div>
-
-        <form action="{{ route('assets.store') }}" method="POST" class="space-y-6">
-            @csrf
-{{-- EDIT: assets/edit.blade.php --}}
 @extends('layouts.app')
 
 @section('content')
@@ -76,11 +50,12 @@
                         class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 transition capitalize"
                         required>
                         <option value="">Pilih Kategori</option>
-                        @foreach(['laptop', 'monitor', 'keyboard', 'mouse', 'printer', 'scanner', 'projector', 'other'] as $cat)
-                        <option value="{{ $cat }}" {{ old('category', $asset['category'] ?? '') == $cat ? 'selected' : '' }}>
-                            {{ ucfirst($cat) }}
-                        </option>
+                        @foreach($categories as $cat)
+                            <option value="{{ $cat['slug'] ?? $cat['name'] }}" {{ old('category', $asset['category'] ?? '') == ($cat['slug'] ?? $cat['name']) ? 'selected' : '' }}>
+                                {{ $cat['name'] }}
+                            </option>
                         @endforeach
+                        <option value="other" {{ old('category', $asset['category'] ?? '') == 'other' ? 'selected' : '' }}>Lainnya</option>
                     </select>
                     @error('category')
                     <p class="text-red-500 text-sm mt-1">{{ $message }}</p>

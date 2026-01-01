@@ -25,17 +25,17 @@
 
         <div class="bg-white rounded-lg shadow p-4">
             <p class="text-gray-500 text-sm mb-1">Due Today</p>
-            <p class="text-2xl font-bold text-orange-600">3</p>
+            <p class="text-2xl font-bold text-orange-600">{{ $stats['due_today'] }}</p>
         </div>
 
         <div class="bg-white rounded-lg shadow p-4">
             <p class="text-gray-500 text-sm mb-1">Overdue</p>
-            <p class="text-2xl font-bold text-red-600">1</p>
+            <p class="text-2xl font-bold text-red-600">{{ $stats['overdue'] }}</p>
         </div>
 
         <div class="bg-white rounded-lg shadow p-4">
             <p class="text-gray-500 text-sm mb-1">On Time</p>
-            <p class="text-2xl font-bold text-green-600">{{ count($transactions) - 4 }}</p>
+            <p class="text-2xl font-bold text-green-600">{{ $stats['on_time'] }}</p>
         </div>
     </div>
 
@@ -132,11 +132,6 @@
                     <i class="fas fa-redo mr-2"></i>
                     Checkin (Return)
                 </a>
-
-                <button data-email="{{ e($tx['user_email'] ?? '') }}" onclick="alertContact(this)"
-                    class="px-4 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">
-                    <i class="fas fa-phone"></i>
-                </button>
             </div>
         </div>
 </div>
@@ -149,12 +144,3 @@
 @endforelse
 </div>
 @endsection
-
-@push('scripts')
-<script>
-function alertContact(el) {
-    const email = el?.dataset?.email || '';
-    alert('Contact: ' + email);
-}
-</script>
-@endpush

@@ -53,12 +53,12 @@
 
         <div class="bg-white rounded-lg shadow p-4">
             <p class="text-gray-500 text-sm mb-1">My Active</p>
-            <p class="text-2xl font-bold text-blue-600">2</p>
+            <p class="text-2xl font-bold text-blue-600">{{ $stats['my_active'] }}</p>
         </div>
 
         <div class="bg-white rounded-lg shadow p-4">
             <p class="text-gray-500 text-sm mb-1">My Pending</p>
-            <p class="text-2xl font-bold text-orange-600">1</p>
+            <p class="text-2xl font-bold text-orange-600">{{ $stats['my_pending'] }}</p>
         </div>
     </div>
 

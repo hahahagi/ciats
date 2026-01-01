@@ -33,11 +33,23 @@
         <div class="bg-white rounded-lg shadow-lg p-6">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-gray-500 text-sm mb-1">Approved</p>
-                    <p class="text-3xl font-bold text-green-600">{{ count(array_filter($transactions, fn($t) => ($t['status'] ?? '') === 'approved')) }}</p>
+                    <p class="text-gray-500 text-sm mb-1">Active</p>
+                    <p class="text-3xl font-bold text-indigo-600">{{ count(array_filter($transactions, fn($t) => ($t['status'] ?? '') === 'active')) }}</p>
+                </div>
+                <div class="bg-indigo-100 p-4 rounded-full">
+                    <i class="fas fa-hourglass-half text-indigo-600 text-2xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-500 text-sm mb-1">Completed</p>
+                    <p class="text-3xl font-bold text-green-600">{{ count(array_filter($transactions, fn($t) => ($t['status'] ?? '') === 'completed')) }}</p>
                 </div>
                 <div class="bg-green-100 p-4 rounded-full">
-                    <i class="fas fa-check-circle text-green-600 text-2xl"></i>
+                    <i class="fas fa-check-double text-green-600 text-2xl"></i>
                 </div>
             </div>
         </div>
@@ -46,22 +58,10 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-gray-500 text-sm mb-1">Pending</p>
-                    <p class="text-3xl font-bold text-yellow-600">{{ count(array_filter($transactions, fn($t) => ($t['status'] ?? '') === 'pending')) }}</p>
+                    <p class="text-3xl font-bold text-yellow-600">{{ count(array_filter($transactions, fn($t) => in_array($t['status'] ?? '', ['pending', 'waiting_approval']))) }}</p>
                 </div>
                 <div class="bg-yellow-100 p-4 rounded-full">
                     <i class="fas fa-clock text-yellow-600 text-2xl"></i>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white rounded-lg shadow-lg p-6">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-gray-500 text-sm mb-1">Rejected</p>
-                    <p class="text-3xl font-bold text-red-600">{{ count(array_filter($transactions, fn($t) => ($t['status'] ?? '') === 'rejected')) }}</p>
-                </div>
-                <div class="bg-red-100 p-4 rounded-full">
-                    <i class="fas fa-times-circle text-red-600 text-2xl"></i>
                 </div>
             </div>
         </div>
@@ -110,15 +110,18 @@
                                 $status = $tx['status'] ?? 'unknown';
                                 $statusConfig = [
                                     'pending' => ['bg' => 'bg-yellow-100', 'text' => 'text-yellow-700', 'icon' => 'fa-clock'],
+                                    'waiting_approval' => ['bg' => 'bg-yellow-100', 'text' => 'text-yellow-700', 'icon' => 'fa-clock'],
                                     'approved' => ['bg' => 'bg-green-100', 'text' => 'text-green-700', 'icon' => 'fa-check-circle'],
                                     'rejected' => ['bg' => 'bg-red-100', 'text' => 'text-red-700', 'icon' => 'fa-times-circle'],
                                     'returned' => ['bg' => 'bg-blue-100', 'text' => 'text-blue-700', 'icon' => 'fa-undo'],
+                                    'completed' => ['bg' => 'bg-blue-100', 'text' => 'text-blue-700', 'icon' => 'fa-check-double'],
+                                    'active' => ['bg' => 'bg-indigo-100', 'text' => 'text-indigo-700', 'icon' => 'fa-hourglass-half'],
                                 ];
                                 $config = $statusConfig[$status] ?? ['bg' => 'bg-gray-100', 'text' => 'text-gray-700', 'icon' => 'fa-question'];
                             @endphp
                             <span class="inline-flex items-center px-3 py-1 {{ $config['bg'] }} {{ $config['text'] }} rounded-full text-xs font-semibold">
                                 <i class="fas {{ $config['icon'] }} mr-1"></i>
-                                {{ ucfirst($status) }}
+                                {{ ucwords(str_replace('_', ' ', $status)) }}
                             </span>
                         </td>
                         <td class="px-6 py-4 text-sm text-gray-600">

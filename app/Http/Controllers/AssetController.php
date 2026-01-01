@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 use Kreait\Firebase\Factory;
 use Illuminate\Routing\Controller;
 
@@ -19,15 +21,14 @@ class AssetController extends Controller
             ->withDatabaseUri(config('firebase.database.url'));
 
         $this->database = $factory->createDatabase();
-        
+
         // Middleware untuk semua method
         $this->middleware(function ($request, $next) {
-    if (!Session::has('user')) {
-        return redirect('/login');
-    }
-    return $next($request);
-});
-
+            if (!Session::has('user')) {
+                return redirect('/login');
+            }
+            return $next($request);
+        });
     }
 
     /**
@@ -60,17 +61,17 @@ class AssetController extends Controller
     public function show($id)
     {
         $user = Session::get('user');
-        
+
         $asset = $this->database->getReference("{$this->tablename}/{$id}")->getValue();
-        
+
         if (!$asset) {
             return redirect()->route('assets.index')->with('error', 'Aset tidak ditemukan.');
         }
-        
+
 
         // Ambil riwayat transaksi untuk aset ini
         $transactions = $this->getAssetTransactions($id);
-        
+
         // Ambil riwayat lokasi
         // $locationHistory = $asset['locations_history'] ?? [];
 
@@ -85,37 +86,41 @@ class AssetController extends Controller
     }
 
     /**
-     * Show create form (HANYA OPERATOR)
+     * Show create form (OPERATOR & ADMIN)
      */
     public function create()
     {
         $user = Session::get('user');
-        
-        // Hanya operator yang boleh create
-        if ($user['role'] != 'operator') {
-            abort(403, 'Hanya operator yang bisa menambah aset.');
+
+        // Operator dan Admin boleh create
+        if (!in_array($user['role'], ['operator', 'admin'])) {
+            abort(403, 'Hanya operator dan admin yang bisa menambah aset.');
         }
 
         // Ambil daftar lokasi dari Firebase
         $locations = $this->database->getReference('locations')->getValue() ?? [];
 
+        // Ambil daftar kategori dari Firebase
+        $categories = $this->database->getReference('categories')->getValue() ?? [];
+
         return view('assets.create', [
             'locations' => $locations,
+            'categories' => $categories,
             'user' => $user,
             'title' => 'Tambah Aset Baru'
         ]);
     }
 
     /**
-     * Store new asset (HANYA OPERATOR)
+     * Store new asset (OPERATOR & ADMIN)
      */
     public function store(Request $request)
     {
         $user = Session::get('user');
-        
-        // Hanya operator yang boleh store
-        if ($user['role'] != 'operator') {
-            abort(403, 'Hanya operator yang bisa menambah aset.');
+
+        // Operator dan Admin boleh store
+        if (!in_array($user['role'], ['operator', 'admin'])) {
+            abort(403, 'Hanya operator dan admin yang bisa menambah aset.');
         }
 
         $request->validate([
@@ -151,44 +156,46 @@ class AssetController extends Controller
     }
 
     /**
-     * Show edit form (HANYA OPERATOR)
+     * Show edit form (OPERATOR & ADMIN)
      */
     public function edit($id)
     {
         $user = Session::get('user');
-        
-        // Hanya operator yang boleh edit
-        if ($user['role'] != 'operator') {
-            abort(403, 'Hanya operator yang bisa mengedit aset.');
+
+        // Operator dan Admin boleh edit
+        if (!in_array($user['role'], ['operator', 'admin'])) {
+            abort(403, 'Hanya operator dan admin yang bisa mengedit aset.');
         }
 
         $asset = $this->database->getReference("{$this->tablename}/{$id}")->getValue();
-        
+
         if (!$asset) {
             return redirect()->route('assets.index')->with('error', 'Aset tidak ditemukan.');
         }
 
         $locations = $this->database->getReference('locations')->getValue() ?? [];
+        $categories = $this->database->getReference('categories')->getValue() ?? [];
 
         return view('assets.edit', [
             'asset' => $asset,
             'assetId' => $id,
             'locations' => $locations,
+            'categories' => $categories,
             'user' => $user,
             'title' => 'Edit Aset'
         ]);
     }
 
     /**
-     * Update asset (HANYA OPERATOR)
+     * Update asset (OPERATOR & ADMIN)
      */
     public function update(Request $request, $id)
     {
         $user = Session::get('user');
-        
-        // Hanya operator yang boleh update
-        if ($user['role'] != 'operator') {
-            abort(403, 'Hanya operator yang bisa mengupdate aset.');
+
+        // Operator dan Admin boleh update
+        if (!in_array($user['role'], ['operator', 'admin'])) {
+            abort(403, 'Hanya operator dan admin yang bisa mengupdate aset.');
         }
 
         $request->validate([
@@ -201,7 +208,7 @@ class AssetController extends Controller
         ]);
 
         $asset = $this->database->getReference("{$this->tablename}/{$id}")->getValue();
-        
+
         if (!$asset) {
             return redirect()->route('assets.index')->with('error', 'Aset tidak ditemukan.');
         }
@@ -215,6 +222,14 @@ class AssetController extends Controller
             'description' => $request->description ?? '',
             'updated_at' => time(),
         ];
+
+        // Regenerate QR Code jika belum ada atau serial number berubah
+        if (empty($asset['qr_code_url']) || $asset['serial_number'] !== $request->serial_number) {
+            $qrCodePath = $this->generateQRCode($request->serial_number, $request->name);
+            if (!empty($qrCodePath)) {
+                $updateData['qr_code_url'] = $qrCodePath;
+            }
+        }
 
         // Jika lokasi berubah, tambahkan ke history
         if (($asset['location'] ?? '') != $request->location) {
@@ -236,20 +251,20 @@ class AssetController extends Controller
     }
 
     /**
-     * Delete asset (HANYA OPERATOR)
+     * Delete asset (OPERATOR & ADMIN)
      */
     public function destroy($id)
     {
         $user = Session::get('user');
-        
-        // Hanya operator yang boleh delete
-        if ($user['role'] != 'operator') {
-            abort(403, 'Hanya operator yang bisa menghapus aset.');
+
+        // Operator dan Admin boleh delete
+        if (!in_array($user['role'], ['operator', 'admin'])) {
+            abort(403, 'Hanya operator dan admin yang bisa menghapus aset.');
         }
 
         // Cek apakah aset sedang dipinjam
         $asset = $this->database->getReference("{$this->tablename}/{$id}")->getValue();
-        
+
         if ($asset && ($asset['status'] ?? '') == 'in_use') {
             return redirect()->route('assets.index')
                 ->with('error', 'Tidak bisa menghapus aset yang sedang dipinjam!');
@@ -268,9 +283,9 @@ class AssetController extends Controller
     public function printQR($id)
     {
         $user = Session::get('user');
-        
+
         $asset = $this->database->getReference("{$this->tablename}/{$id}")->getValue();
-        
+
         if (!$asset) {
             return redirect()->route('assets.index')->with('error', 'Aset tidak ditemukan.');
         }
@@ -290,7 +305,7 @@ class AssetController extends Controller
     {
         // Install dulu: composer require simplesoftwareio/simple-qrcode
         // Jika belum install, return path kosong dulu
-        
+
         try {
             if (class_exists('SimpleSoftwareIO\QrCode\Facades\QrCode')) {
                 $qrContent = json_encode([
@@ -299,22 +314,30 @@ class AssetController extends Controller
                     'type' => 'asset',
                     'time' => time()
                 ]);
-                
-                // Simpan ke storage
-                $filename = 'qrcode_' . $serialNumber . '_' . time() . '.png';
-                $path = storage_path('app/public/qrcodes/' . $filename);
-                
-                \SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')
+
+                // Pastikan folder exists
+                $directory = storage_path('app/public/qrcodes');
+                if (!File::exists($directory)) {
+                    File::makeDirectory($directory, 0755, true);
+                }
+
+                // Simpan ke storage (Gunakan SVG agar tidak butuh Imagick)
+                $filename = 'qrcode_' . $serialNumber . '_' . time() . '.svg';
+                $path = $directory . '/' . $filename;
+
+                \SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')
                     ->size(300)
                     ->generate($qrContent, $path);
-                
+
                 return '/storage/qrcodes/' . $filename;
+            } else {
+                Log::warning('SimpleSoftwareIO\QrCode library is not installed or class not found.');
             }
         } catch (\Exception $e) {
             // Log error jika QR Code gagal
-            // \Log::error('QR Code generation failed: ' . $e->getMessage());
+            Log::error('QR Code generation failed: ' . $e->getMessage());
         }
-        
+
         return ''; // Return empty string jika gagal
     }
 
@@ -325,7 +348,7 @@ class AssetController extends Controller
     {
         $transactionsRef = $this->database->getReference('transactions')->getValue();
         $assetTransactions = [];
-        
+
         if ($transactionsRef) {
             foreach ($transactionsRef as $txId => $transaction) {
                 if (($transaction['asset_id'] ?? '') == $assetId) {
@@ -334,7 +357,7 @@ class AssetController extends Controller
                 }
             }
         }
-        
+
         return $assetTransactions;
     }
 }

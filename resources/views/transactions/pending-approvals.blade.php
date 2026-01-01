@@ -21,7 +21,7 @@
         <div class="bg-white rounded-lg shadow-lg p-6">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-gray-500 text-sm mb-1">Pending Today</p>
+                    <p class="text-gray-500 text-sm mb-1">Total Pending</p>
                     <p class="text-3xl font-bold text-yellow-600">{{ count($transactions) }}</p>
                 </div>
                 <div class="bg-yellow-100 p-4 rounded-full">
@@ -34,7 +34,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-gray-500 text-sm mb-1">Approved This Week</p>
-                    <p class="text-3xl font-bold text-green-600">24</p>
+                    <p class="text-3xl font-bold text-green-600">{{ $stats['approved_week'] }}</p>
                 </div>
                 <div class="bg-green-100 p-4 rounded-full">
                     <i class="fas fa-check-circle text-green-600 text-2xl"></i>
@@ -46,7 +46,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-gray-500 text-sm mb-1">Rejected This Week</p>
-                    <p class="text-3xl font-bold text-red-600">3</p>
+                    <p class="text-3xl font-bold text-red-600">{{ $stats['rejected_week'] }}</p>
                 </div>
                 <div class="bg-red-100 p-4 rounded-full">
                     <i class="fas fa-times-circle text-red-600 text-2xl"></i>
@@ -130,15 +130,13 @@
 
             <!-- Action Buttons -->
             <div class="flex gap-3">
-                <button data-tx-id="{{ $tx['id'] }}" data-asset-name="{{ $tx['asset_name'] ?? '' }}"
-                    data-user-name="{{ $tx['user_name'] ?? '' }}" onclick="openApproveModalFromEl(this)"
+                <button onclick="confirmApprove('{{ $tx['id'] }}', '{{ $tx['asset_name'] ?? '' }}', '{{ $tx['user_name'] ?? '' }}')"
                     class="flex-1 px-4 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white font-semibold rounded-lg hover:shadow-lg transition">
                     <i class="fas fa-check mr-2"></i>
                     Approve
                 </button>
 
-                <button data-tx-id="{{ $tx['id'] }}" data-asset-name="{{ $tx['asset_name'] ?? '' }}"
-                    data-user-name="{{ $tx['user_name'] ?? '' }}" onclick="openRejectModalFromEl(this)"
+                <button onclick="confirmReject('{{ $tx['id'] }}', '{{ $tx['asset_name'] ?? '' }}', '{{ $tx['user_name'] ?? '' }}')"
                     class="flex-1 px-4 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white font-semibold rounded-lg hover:shadow-lg transition">
                     <i class="fas fa-times mr-2"></i>
                     Reject
@@ -155,114 +153,67 @@
     @endforelse
 </div>
 
-<!-- Approve Modal -->
-<div id="approveModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-    <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
-        <div class="flex items-center space-x-3 mb-4">
-            <div class="bg-green-100 p-3 rounded-full">
-                <i class="fas fa-check-circle text-green-600 text-2xl"></i>
-            </div>
-            <h3 class="text-xl font-bold text-gray-800">Approve Request</h3>
-        </div>
-
-        <p class="text-gray-600 mb-6">
-            Approve peminjaman <span class="font-semibold" id="approveAssetName"></span> untuk <span
-                class="font-semibold" id="approveUserName"></span>?
-        </p>
-
-        <form id="approveForm" method="POST">
-            @csrf
-            <div class="flex gap-3">
-                <button type="submit"
-                    class="flex-1 px-4 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition">
-                    Ya, Approve
-                </button>
-                <button type="button" onclick="closeApproveModal()"
-                    class="flex-1 px-4 py-3 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition">
-                    Batal
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- Reject Modal -->
-<div id="rejectModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-    <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
-        <div class="flex items-center space-x-3 mb-4">
-            <div class="bg-red-100 p-3 rounded-full">
-                <i class="fas fa-times-circle text-red-600 text-2xl"></i>
-            </div>
-            <h3 class="text-xl font-bold text-gray-800">Reject Request</h3>
-        </div>
-
-        <p class="text-gray-600 mb-4">
-            Reject peminjaman <span class="font-semibold" id="rejectAssetName"></span> untuk <span class="font-semibold"
-                id="rejectUserName"></span>
-        </p>
-
-        <form id="rejectForm" method="POST">
-            @csrf
-            <div class="mb-4">
-                <label class="block text-gray-700 font-medium mb-2">
-                    Alasan Penolakan <span class="text-red-500">*</span>
-                </label>
-                <textarea name="rejection_reason" rows="4"
-                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-red-500"
-                    placeholder="Jelaskan alasan penolakan..." required></textarea>
-            </div>
-
-            <div class="flex gap-3">
-                <button type="submit"
-                    class="flex-1 px-4 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition">
-                    Ya, Reject
-                </button>
-                <button type="button" onclick="closeRejectModal()"
-                    class="flex-1 px-4 py-3 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition">
-                    Batal
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
+<!-- Hidden Forms for Actions -->
+<form id="actionForm" method="POST" class="hidden">
+    @csrf
+</form>
 
 <script>
-function openApproveModal(txId, assetName, userName) {
-    document.getElementById('approveAssetName').textContent = assetName;
-    document.getElementById('approveUserName').textContent = userName;
-    document.getElementById('approveForm').action = `/transactions/${txId}/approve`;
-    document.getElementById('approveModal').classList.remove('hidden');
+function confirmApprove(txId, assetName, userName) {
+    Swal.fire({
+        title: 'Approve Request?',
+        text: `Setujui peminjaman ${assetName} untuk ${userName}?`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#10B981',
+        cancelButtonColor: '#6B7280',
+        confirmButtonText: 'Ya, Approve',
+        cancelButtonText: 'Batal'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const form = document.getElementById('actionForm');
+            form.action = `/transactions/${txId}/approve`;
+            form.submit();
+        }
+    });
 }
 
-function closeApproveModal() {
-    document.getElementById('approveModal').classList.add('hidden');
-}
+function confirmReject(txId, assetName, userName) {
+    Swal.fire({
+        title: 'Reject Request',
+        text: `Tolak peminjaman ${assetName} untuk ${userName}?`,
+        icon: 'warning',
+        input: 'textarea',
+        inputLabel: 'Alasan Penolakan',
+        inputPlaceholder: 'Tuliskan alasan penolakan di sini...',
+        inputAttributes: {
+            'aria-label': 'Tuliskan alasan penolakan di sini'
+        },
+        showCancelButton: true,
+        confirmButtonColor: '#EF4444',
+        cancelButtonColor: '#6B7280',
+        confirmButtonText: 'Ya, Reject',
+        cancelButtonText: 'Batal',
+        inputValidator: (value) => {
+            if (!value) {
+                return 'Anda harus menuliskan alasan penolakan!'
+            }
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const form = document.getElementById('actionForm');
+            form.action = `/transactions/${txId}/reject`;
 
-function openApproveModalFromEl(el) {
-    openApproveModal(el.dataset.txId, el.dataset.assetName, el.dataset.userName);
-}
+            // Add rejection reason input dynamically
+            const reasonInput = document.createElement('input');
+            reasonInput.type = 'hidden';
+            reasonInput.name = 'rejection_reason';
+            reasonInput.value = result.value;
+            form.appendChild(reasonInput);
 
-function openRejectModalFromEl(el) {
-    openRejectModal(el.dataset.txId, el.dataset.assetName, el.dataset.userName);
+            form.submit();
+        }
+    });
 }
-
-function openRejectModal(txId, assetName, userName) {
-    document.getElementById('rejectAssetName').textContent = assetName;
-    document.getElementById('rejectUserName').textContent = userName;
-    document.getElementById('rejectForm').action = `/transactions/${txId}/reject`;
-    document.getElementById('rejectModal').classList.remove('hidden');
-}
-
-function closeRejectModal() {
-    document.getElementById('rejectModal').classList.add('hidden');
-}
-
-// Close modals on ESC key
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        closeApproveModal();
-        closeRejectModal();
-    }
-});
 </script>
 @endsection

@@ -1,0 +1,12 @@
+{
+    "rules": {
+        ".read": "now < 1767225600000", // 2026-01-01
+        ".write": "now < 1767225600000", // 2026-01-01
+        "assets": {
+            ".indexOn": ["serial_number"]
+        },
+        "transactions": {
+            ".indexOn": ["status"]
+        }
+    }
+}

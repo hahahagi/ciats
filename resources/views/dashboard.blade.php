@@ -28,14 +28,14 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-gray-500 text-sm font-medium">Total Aset</p>
-                    <p class="text-3xl font-bold text-purple-600 mt-2">156</p>
+                    <p class="text-3xl font-bold text-purple-600 mt-2">{{ $stats['total_assets'] }}</p>
                 </div>
                 <div class="bg-purple-100 p-4 rounded-full">
                     <i class="fas fa-boxes text-purple-600 text-2xl"></i>
                 </div>
             </div>
             <p class="text-green-500 text-sm mt-3">
-                <i class="fas fa-arrow-up mr-1"></i> +12 bulan ini
+                <i class="fas fa-arrow-up mr-1"></i> Data Realtime
             </p>
         </div>
 
@@ -43,7 +43,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-gray-500 text-sm font-medium">Dipinjam</p>
-                    <p class="text-3xl font-bold text-blue-600 mt-2">43</p>
+                    <p class="text-3xl font-bold text-blue-600 mt-2">{{ $stats['borrowed_assets'] }}</p>
                 </div>
                 <div class="bg-blue-100 p-4 rounded-full">
                     <i class="fas fa-exchange-alt text-blue-600 text-2xl"></i>
@@ -56,7 +56,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-gray-500 text-sm font-medium">Total User</p>
-                    <p class="text-3xl font-bold text-teal-600 mt-2">87</p>
+                    <p class="text-3xl font-bold text-teal-600 mt-2">{{ $stats['total_users'] }}</p>
                 </div>
                 <div class="bg-teal-100 p-4 rounded-full">
                     <i class="fas fa-users text-teal-600 text-2xl"></i>
@@ -69,7 +69,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-gray-500 text-sm font-medium">Pending</p>
-                    <p class="text-3xl font-bold text-orange-600 mt-2">8</p>
+                    <p class="text-3xl font-bold text-orange-600 mt-2">{{ $stats['pending_requests'] }}</p>
                 </div>
                 <div class="bg-orange-100 p-4 rounded-full">
                     <i class="fas fa-clock text-orange-600 text-2xl"></i>
@@ -84,7 +84,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-gray-500 text-sm font-medium">Total Aset</p>
-                    <p class="text-3xl font-bold text-purple-600 mt-2">156</p>
+                    <p class="text-3xl font-bold text-purple-600 mt-2">{{ $stats['total_assets'] }}</p>
                 </div>
                 <div class="bg-purple-100 p-4 rounded-full">
                     <i class="fas fa-boxes text-purple-600 text-2xl"></i>
@@ -99,7 +99,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-gray-500 text-sm font-medium">Pending Approval</p>
-                    <p class="text-3xl font-bold text-orange-600 mt-2">8</p>
+                    <p class="text-3xl font-bold text-orange-600 mt-2">{{ $stats['pending_requests'] }}</p>
                 </div>
                 <div class="bg-orange-100 p-4 rounded-full">
                     <i class="fas fa-clock text-orange-600 text-2xl"></i>
@@ -115,7 +115,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-gray-500 text-sm font-medium">Aktif Dipinjam</p>
-                    <p class="text-3xl font-bold text-blue-600 mt-2">43</p>
+                    <p class="text-3xl font-bold text-blue-600 mt-2">{{ $stats['borrowed_assets'] }}</p>
                 </div>
                 <div class="bg-blue-100 p-4 rounded-full">
                     <i class="fas fa-exchange-alt text-blue-600 text-2xl"></i>
@@ -131,7 +131,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-gray-500 text-sm font-medium">Available</p>
-                    <p class="text-3xl font-bold text-green-600 mt-2">113</p>
+                    <p class="text-3xl font-bold text-green-600 mt-2">{{ $stats['available_assets'] }}</p>
                 </div>
                 <div class="bg-green-100 p-4 rounded-full">
                     <i class="fas fa-check-circle text-green-600 text-2xl"></i>
@@ -146,7 +146,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-gray-500 text-sm font-medium">Aset Tersedia</p>
-                    <p class="text-3xl font-bold text-green-600 mt-2">113</p>
+                    <p class="text-3xl font-bold text-green-600 mt-2">{{ $stats['available_assets'] }}</p>
                 </div>
                 <div class="bg-green-100 p-4 rounded-full">
                     <i class="fas fa-boxes text-green-600 text-2xl"></i>
@@ -162,7 +162,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-gray-500 text-sm font-medium">Request Saya</p>
-                    <p class="text-3xl font-bold text-blue-600 mt-2">3</p>
+                    <p class="text-3xl font-bold text-blue-600 mt-2">{{ $stats['my_requests'] }}</p>
                 </div>
                 <div class="bg-blue-100 p-4 rounded-full">
                     <i class="fas fa-clipboard-list text-blue-600 text-2xl"></i>
@@ -178,7 +178,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-gray-500 text-sm font-medium">Sedang Dipinjam</p>
-                    <p class="text-3xl font-bold text-orange-600 mt-2">2</p>
+                    <p class="text-3xl font-bold text-orange-600 mt-2">{{ $stats['my_active_loans'] }}</p>
                 </div>
                 <div class="bg-orange-100 p-4 rounded-full">
                     <i class="fas fa-hand-holding text-orange-600 text-2xl"></i>
@@ -191,7 +191,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-gray-500 text-sm font-medium">Pending</p>
-                    <p class="text-3xl font-bold text-purple-600 mt-2">1</p>
+                    <p class="text-3xl font-bold text-purple-600 mt-2">{{ $stats['my_pending_requests'] }}</p>
                 </div>
                 <div class="bg-purple-100 p-4 rounded-full">
                     <i class="fas fa-clock text-purple-600 text-2xl"></i>
@@ -233,7 +233,7 @@
                         </div>
                         <span class="font-medium text-gray-700">Proses Persetujuan</span>
                     </div>
-                    <span class="bg-orange-500 text-white text-xs px-2 py-1 rounded-full">8</span>
+                    <span class="bg-orange-500 text-white text-xs px-2 py-1 rounded-full">{{ $stats['pending_requests'] }}</span>
                 </a>
 
                 <a href="{{ route('scanner.index') }}"
@@ -326,45 +326,93 @@
             </h3>
 
             <div class="space-y-4">
-                <div class="flex items-start space-x-3 pb-4 border-b">
-                    <div class="bg-green-100 p-2 rounded-lg">
-                        <i class="fas fa-check text-green-600"></i>
-                    </div>
-                    <div class="flex-1">
-                        <p class="font-medium text-gray-800">Peminjaman Disetujui</p>
-                        <p class="text-sm text-gray-500">Laptop Dell XPS 15 • 2 jam lalu</p>
-                    </div>
-                </div>
+                @forelse($activities as $activity)
+                    @php
+                        $status = $activity['status'] ?? '';
+                        $assetName = $activity['asset_name'] ?? 'Unknown Asset';
+                        $userName = $activity['user_name'] ?? 'User';
 
-                <div class="flex items-start space-x-3 pb-4 border-b">
-                    <div class="bg-blue-100 p-2 rounded-lg">
-                        <i class="fas fa-plus text-blue-600"></i>
-                    </div>
-                    <div class="flex-1">
-                        <p class="font-medium text-gray-800">Aset Baru Ditambahkan</p>
-                        <p class="text-sm text-gray-500">Monitor LG 27" • 5 jam lalu</p>
-                    </div>
-                </div>
+                        // Determine timestamp
+                        $timestamp = $activity['updated_at'] ?? $activity['created_at'] ?? $activity['requested_at'] ?? time();
+                        try {
+                            $time = \Carbon\Carbon::createFromTimestamp($timestamp)->diffForHumans();
+                        } catch (\Exception $e) {
+                            $time = '-';
+                        }
 
-                <div class="flex items-start space-x-3 pb-4 border-b">
-                    <div class="bg-purple-100 p-2 rounded-lg">
-                        <i class="fas fa-redo text-purple-600"></i>
-                    </div>
-                    <div class="flex-1">
-                        <p class="font-medium text-gray-800">Aset Dikembalikan</p>
-                        <p class="text-sm text-gray-500">Keyboard Mechanical • Kemarin</p>
-                    </div>
-                </div>
+                        $icon = 'fa-circle';
+                        $bgClass = 'bg-gray-100';
+                        $textClass = 'text-gray-600';
+                        $title = 'Aktivitas';
+                        $desc = "$assetName";
 
-                <div class="flex items-start space-x-3">
-                    <div class="bg-orange-100 p-2 rounded-lg">
-                        <i class="fas fa-clock text-orange-600"></i>
+                        switch($status) {
+                            case 'waiting_approval':
+                            case 'pending':
+                                $icon = 'fa-clock';
+                                $bgClass = 'bg-yellow-100';
+                                $textClass = 'text-yellow-600';
+                                $title = "Request Peminjaman";
+                                $desc = "$userName mengajukan peminjaman $assetName";
+                                break;
+                            case 'approved':
+                                $icon = 'fa-check-circle';
+                                $bgClass = 'bg-green-100';
+                                $textClass = 'text-green-600';
+                                $title = "Peminjaman Disetujui";
+                                $desc = "Request $userName untuk $assetName disetujui";
+                                break;
+                            case 'active':
+                                $icon = 'fa-hand-holding';
+                                $bgClass = 'bg-blue-100';
+                                $textClass = 'text-blue-600';
+                                $title = "Barang Diambil";
+                                $desc = "$userName telah mengambil $assetName";
+                                break;
+                            case 'completed':
+                            case 'returned':
+                                $icon = 'fa-check-double';
+                                $bgClass = 'bg-indigo-100';
+                                $textClass = 'text-indigo-600';
+                                $title = "Barang Dikembalikan";
+                                $desc = "$userName telah mengembalikan $assetName";
+                                break;
+                            case 'rejected':
+                                $icon = 'fa-times-circle';
+                                $bgClass = 'bg-red-100';
+                                $textClass = 'text-red-600';
+                                $title = "Request Ditolak";
+                                $desc = "Pengajuan $userName untuk $assetName ditolak";
+                                break;
+                            default:
+                                $icon = 'fa-info-circle';
+                                $bgClass = 'bg-gray-100';
+                                $textClass = 'text-gray-600';
+                                $title = "Status: " . ucfirst($status);
+                                $desc = "$userName - $assetName";
+                        }
+                    @endphp
+
+                    <div class="flex items-start space-x-3 pb-4 border-b last:border-0">
+                        <div class="{{ $bgClass }} p-2 rounded-lg">
+                            <i class="fas {{ $icon }} {{ $textClass }}"></i>
+                        </div>
+                        <div class="flex-1">
+                            <p class="font-medium text-gray-800">{{ $title }}</p>
+                            <p class="text-sm text-gray-600">{{ $desc }}</p>
+                            <p class="text-xs text-gray-400 mt-1">
+                                <i class="far fa-clock mr-1"></i> {{ $time }}
+                            </p>
+                        </div>
                     </div>
-                    <div class="flex-1">
-                        <p class="font-medium text-gray-800">Request Pending</p>
-                        <p class="text-sm text-gray-500">Mouse Logitech MX • 2 hari lalu</p>
+                @empty
+                    <div class="text-center py-8">
+                        <div class="bg-gray-50 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-3">
+                            <i class="fas fa-history text-gray-300 text-2xl"></i>
+                        </div>
+                        <p class="text-gray-500">Belum ada aktivitas terbaru.</p>
                     </div>
-                </div>
+                @endforelse
             </div>
         </div>
     </div>

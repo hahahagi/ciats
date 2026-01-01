@@ -138,7 +138,7 @@
                 @if(count($transactions) > 0)
                 <div class="space-y-3">
                     @foreach($transactions as $tx)
-                    <div class="border-l-4 
+                    <div class="border-l-4
                         @if($tx['status'] == 'completed') border-green-500 @elseif($tx['status'] == 'active') border-blue-500 @elseif($tx['status'] == 'rejected') border-red-500 @else border-yellow-500 @endif
                         bg-gray-50 p-4 rounded-r-lg">
 
@@ -203,6 +203,39 @@
                 <h3 class="text-lg font-bold text-gray-800 mb-4">Actions</h3>
 
                 <div class="space-y-3">
+                    @php
+                        $pendingCheckout = null;
+                        $activeLoan = null;
+                        if(isset($transactions) && is_array($transactions)) {
+                            foreach($transactions as $tx) {
+                                if (($tx['status'] ?? '') == 'approved') {
+                                    $pendingCheckout = $tx;
+                                }
+                                if (($tx['status'] ?? '') == 'active') {
+                                    $activeLoan = $tx;
+                                }
+                            }
+                        }
+                    @endphp
+
+                    @if(in_array($user['role'], ['operator', 'admin']))
+                        @if($pendingCheckout)
+                        <a href="{{ route('transactions.checkoutForm', $pendingCheckout['id']) }}"
+                            class="flex items-center justify-center space-x-2 w-full px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition shadow-md animate-pulse">
+                            <i class="fas fa-hand-holding"></i>
+                            <span>Proses Checkout</span>
+                        </a>
+                        @endif
+
+                        @if($activeLoan)
+                        <a href="{{ route('transactions.checkinForm', $activeLoan['id']) }}"
+                            class="flex items-center justify-center space-x-2 w-full px-4 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition shadow-md">
+                            <i class="fas fa-check-double"></i>
+                            <span>Proses Checkin (Kembali)</span>
+                        </a>
+                        @endif
+                    @endif
+
                     @if($user['role'] == 'operator')
                     <a href="{{ route('assets.edit', $assetId) }}"
                         class="flex items-center justify-center space-x-2 w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
@@ -210,11 +243,10 @@
                         <span>Edit Aset</span>
                     </a>
 
-                    <form action="{{ route('assets.destroy', $assetId) }}" method="POST"
-                        onsubmit="return confirm('Yakin ingin menghapus aset ini?');">
+                    <form id="deleteForm" action="{{ route('assets.destroy', $assetId) }}" method="POST">
                         @csrf
                         @method('DELETE')
-                        <button type="submit"
+                        <button type="button" onclick="confirmDelete()"
                             class="flex items-center justify-center space-x-2 w-full px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">
                             <i class="fas fa-trash"></i>
                             <span>Hapus Aset</span>
@@ -261,4 +293,23 @@
         </div>
     </div>
 </div>
+
+<script>
+function confirmDelete() {
+    Swal.fire({
+        title: 'Hapus Aset?',
+        text: "Aset yang dihapus tidak dapat dikembalikan!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Ya, Hapus!',
+        cancelButtonText: 'Batal'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            document.getElementById('deleteForm').submit();
+        }
+    })
+}
+</script>
 @endsection
