@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Kreait\Firebase\Factory;
 use Illuminate\Routing\Controller;
+use App\Services\AuditLogger;
 
 class AssetController extends Controller
 {
@@ -149,7 +150,14 @@ class AssetController extends Controller
         ];
 
         // Tambah ke Firebase
-        $this->database->getReference($this->tablename)->push($newAsset);
+        $newRef = $this->database->getReference($this->tablename)->push($newAsset);
+
+        // Audit Log
+        AuditLogger::log('asset_created', [
+            'asset_id' => $newRef->getKey(),
+            'name' => $request->name,
+            'serial_number' => $request->serial_number
+        ], $user['id'], $user['name']);
 
         return redirect()->route('assets.index')
             ->with('success', 'Aset berhasil ditambahkan! QR Code telah digenerate.');
@@ -246,6 +254,12 @@ class AssetController extends Controller
         // Update data
         $this->database->getReference("{$this->tablename}/{$id}")->update($updateData);
 
+        // Audit Log
+        AuditLogger::log('asset_updated', [
+            'asset_id' => $id,
+            'changes' => $updateData
+        ], $user['id'], $user['name']);
+
         return redirect()->route('assets.show', $id)
             ->with('success', 'Aset berhasil diperbarui!');
     }
@@ -272,6 +286,12 @@ class AssetController extends Controller
 
         // Hapus dari Firebase
         $this->database->getReference("{$this->tablename}/{$id}")->remove();
+
+        // Audit Log
+        AuditLogger::log('asset_deleted', [
+            'asset_id' => $id,
+            'name' => $asset['name'] ?? 'Unknown'
+        ], $user['id'], $user['name']);
 
         return redirect()->route('assets.index')
             ->with('success', 'Aset berhasil dihapus!');

@@ -104,6 +104,7 @@ Route::prefix('transactions')->group(function () {
 Route::prefix('reports')->group(function () {
     Route::get('/', [ReportController::class, 'index'])->name('reports.index');
     Route::post('/generate', [ReportController::class, 'generate'])->name('reports.generate');
+    Route::post('/export', [ReportController::class, 'exportCsv'])->name('reports.export');
 });
 
 // =======================

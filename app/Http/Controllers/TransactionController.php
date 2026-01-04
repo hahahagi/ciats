@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use Kreait\Firebase\Factory;
 use Illuminate\Routing\Controller;
+use App\Services\AuditLogger;
 
 class TransactionController extends Controller
 {
@@ -170,6 +171,13 @@ class TransactionController extends Controller
             'updated_at' => time(),
         ]);
 
+        // Audit Log
+        AuditLogger::log('transaction_requested', [
+            'transaction_id' => $transactionId,
+            'asset_id' => $assetId,
+            'asset_name' => $asset['name'] ?? ''
+        ], $user['id'], $user['name']);
+
         return redirect()->route('transactions.myRequests')
             ->with('success', 'Pengajuan berhasil! Menunggu persetujuan operator.');
     }
@@ -284,6 +292,11 @@ class TransactionController extends Controller
             'approved_at' => time(),
         ]);
 
+        // Audit Log
+        AuditLogger::log('transaction_approved', [
+            'transaction_id' => $id
+        ], $user['id'], $user['name']);
+
         return redirect()->route('transactions.pendingApprovals')
             ->with('success', 'Request telah disetujui! Karyawan bisa mengambil barang.');
     }
@@ -325,6 +338,12 @@ class TransactionController extends Controller
                 'updated_at' => time(),
             ]);
         }
+
+        // Audit Log
+        AuditLogger::log('transaction_rejected', [
+            'transaction_id' => $id,
+            'reason' => $request->rejection_reason
+        ], $user['id'], $user['name']);
 
         return redirect()->route('transactions.pendingApprovals')
             ->with('success', 'Request telah ditolak.');
@@ -397,6 +416,13 @@ class TransactionController extends Controller
             'current_transaction_id' => $transactionId,
             'updated_at' => time(),
         ]);
+
+        // Audit Log
+        AuditLogger::log('transaction_checkout', [
+            'transaction_id' => $transactionId,
+            'asset_id' => $assetId,
+            'condition' => $request->condition
+        ], $user['id'], $user['name']);
 
         return redirect()->route('transactions.activeLoans')
             ->with('success', 'Barang berhasil diserahkan ke karyawan.');
@@ -471,6 +497,13 @@ class TransactionController extends Controller
         ];
 
         $this->database->getReference("assets/{$assetId}")->update($updateData);
+
+        // Audit Log
+        AuditLogger::log('transaction_checkin', [
+            'transaction_id' => $transactionId,
+            'asset_id' => $assetId,
+            'condition_after' => $request->condition
+        ], $user['id'], $user['name']);
 
         return redirect()->route('transactions.activeLoans')
             ->with('success', 'Barang berhasil diterima kembali.');

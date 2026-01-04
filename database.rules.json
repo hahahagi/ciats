@@ -3,10 +3,22 @@
         ".read": "now < 1767225600000", // 2026-01-01
         ".write": "now < 1767225600000", // 2026-01-01
         "assets": {
-            ".indexOn": ["serial_number"]
+            ".indexOn": ["serial_number", "status", "category", "created_at"]
         },
         "transactions": {
-            ".indexOn": ["status"]
+            ".indexOn": [
+                "status",
+                "user_id",
+                "asset_id",
+                "requested_at",
+                "updated_at"
+            ]
+        },
+        "users": {
+            ".indexOn": ["email"]
+        },
+        "audit_logs": {
+            ".indexOn": ["timestamp", "user_id", "action"]
         }
     }
 }
