@@ -124,6 +124,14 @@ class TransactionController extends Controller
             'purpose' => 'required|string|min:10|max:500',
             'requested_location' => 'required|string',
             'expected_return_date' => 'required|date|after:today',
+        ], [
+            'purpose.required' => 'Tujuan peminjaman wajib diisi.',
+            'purpose.min' => 'Tujuan peminjaman minimal 10 karakter.',
+            'purpose.max' => 'Tujuan peminjaman maksimal 500 karakter.',
+            'requested_location.required' => 'Lokasi penggunaan wajib dipilih.',
+            'expected_return_date.required' => 'Perkiraan tanggal pengembalian wajib diisi.',
+            'expected_return_date.date' => 'Format tanggal tidak valid.',
+            'expected_return_date.after' => 'Tanggal pengembalian harus setelah hari ini.',
         ]);
 
         $assetId = $request->asset_id;
