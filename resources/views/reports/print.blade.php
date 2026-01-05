@@ -31,64 +31,66 @@
         </div>
 
         <!-- Content -->
-        <table class="w-full text-left border-collapse border border-gray-300">
-            <thead>
-                <tr class="bg-gray-100 text-gray-800 text-sm uppercase">
-                    <th class="border border-gray-300 px-4 py-2">No</th>
-                    <th class="border border-gray-300 px-4 py-2">Tanggal</th>
-                    @if($type == 'transactions')
-                    <th class="border border-gray-300 px-4 py-2">Peminjam</th>
-                    <th class="border border-gray-300 px-4 py-2">Aset</th>
-                    <th class="border border-gray-300 px-4 py-2">Status</th>
-                    @else
-                    <th class="border border-gray-300 px-4 py-2">Nama Aset</th>
-                    <th class="border border-gray-300 px-4 py-2">Kategori</th>
-                    <th class="border border-gray-300 px-4 py-2">Lokasi</th>
-                    <th class="border border-gray-300 px-4 py-2">Status</th>
-                    @endif
-                </tr>
-            </thead>
-            <tbody class="text-sm text-gray-700">
-                @forelse($data as $index => $item)
-                <tr>
-                    <td class="border border-gray-300 px-4 py-2 text-center">{{ $index + 1 }}</td>
-                    <td class="border border-gray-300 px-4 py-2">
-                        {{ date('d M Y H:i', $type == 'transactions' ? ($item['requested_at'] ?? 0) : ($item['created_at'] ?? 0)) }}
-                    </td>
-                    @if($type == 'transactions')
-                    <td class="border border-gray-300 px-4 py-2">
-                        <div class="font-semibold">{{ $item['user_name'] ?? '-' }}</div>
-                        <div class="text-xs text-gray-500">{{ $item['user_email'] ?? '-' }}</div>
-                    </td>
-                    <td class="border border-gray-300 px-4 py-2">
-                        <div class="font-semibold">{{ $item['asset_name'] ?? '-' }}</div>
-                        <div class="text-xs text-gray-500">{{ $item['asset_serial'] ?? '-' }}</div>
-                    </td>
-                    <td class="border border-gray-300 px-4 py-2">
-                        <span class="px-2 py-1 rounded text-xs font-bold
-                            {{ ($item['status'] ?? '') == 'completed' ? 'bg-green-100 text-green-800' :
-                               (($item['status'] ?? '') == 'active' ? 'bg-blue-100 text-blue-800' :
-                               (($item['status'] ?? '') == 'approved' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800')) }}">
-                            {{ ucfirst($item['status'] ?? '-') }}
-                        </span>
-                    </td>
-                    @else
-                    <td class="border border-gray-300 px-4 py-2">
-                        <div class="font-semibold">{{ $item['name'] ?? '-' }}</div>
-                        <div class="text-xs text-gray-500">{{ $item['serial_number'] ?? '-' }}</div>
-                    </td>
-                    <td class="border border-gray-300 px-4 py-2 capitalize">{{ $item['category'] ?? '-' }}</td>
-                    <td class="border border-gray-300 px-4 py-2">{{ $item['location'] ?? '-' }}</td>
-                    <td class="border border-gray-300 px-4 py-2 capitalize">{{ str_replace('_', ' ', $item['status'] ?? '-') }}</td>
-                    @endif
-                </tr>
-                @empty
-                <tr>
-                    <td colspan="5" class="border border-gray-300 px-4 py-8 text-center text-gray-500">Tidak ada data ditemukan.</td>
-                </tr>
-                @endforelse
-            </tbody>
-        </table>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse border border-gray-300">
+                <thead>
+                    <tr class="bg-gray-100 text-gray-800 text-sm uppercase">
+                        <th class="border border-gray-300 px-4 py-2">No</th>
+                        <th class="border border-gray-300 px-4 py-2">Tanggal</th>
+                        @if($type == 'transactions')
+                        <th class="border border-gray-300 px-4 py-2">Peminjam</th>
+                        <th class="border border-gray-300 px-4 py-2">Aset</th>
+                        <th class="border border-gray-300 px-4 py-2">Status</th>
+                        @else
+                        <th class="border border-gray-300 px-4 py-2">Nama Aset</th>
+                        <th class="border border-gray-300 px-4 py-2">Kategori</th>
+                        <th class="border border-gray-300 px-4 py-2">Lokasi</th>
+                        <th class="border border-gray-300 px-4 py-2">Status</th>
+                        @endif
+                    </tr>
+                </thead>
+                <tbody class="text-sm text-gray-700">
+                    @forelse($data as $index => $item)
+                    <tr>
+                        <td class="border border-gray-300 px-4 py-2 text-center">{{ $index + 1 }}</td>
+                        <td class="border border-gray-300 px-4 py-2">
+                            {{ date('d M Y H:i', $type == 'transactions' ? ($item['requested_at'] ?? 0) : ($item['created_at'] ?? 0)) }}
+                        </td>
+                        @if($type == 'transactions')
+                        <td class="border border-gray-300 px-4 py-2">
+                            <div class="font-semibold">{{ $item['user_name'] ?? '-' }}</div>
+                            <div class="text-xs text-gray-500">{{ $item['user_email'] ?? '-' }}</div>
+                        </td>
+                        <td class="border border-gray-300 px-4 py-2">
+                            <div class="font-semibold">{{ $item['asset_name'] ?? '-' }}</div>
+                            <div class="text-xs text-gray-500">{{ $item['asset_serial'] ?? '-' }}</div>
+                        </td>
+                        <td class="border border-gray-300 px-4 py-2">
+                            <span class="px-2 py-1 rounded text-xs font-bold
+                                {{ ($item['status'] ?? '') == 'completed' ? 'bg-green-100 text-green-800' :
+                                   (($item['status'] ?? '') == 'active' ? 'bg-blue-100 text-blue-800' :
+                                   (($item['status'] ?? '') == 'approved' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800')) }}">
+                                {{ ucfirst($item['status'] ?? '-') }}
+                            </span>
+                        </td>
+                        @else
+                        <td class="border border-gray-300 px-4 py-2">
+                            <div class="font-semibold">{{ $item['name'] ?? '-' }}</div>
+                            <div class="text-xs text-gray-500">{{ $item['serial_number'] ?? '-' }}</div>
+                        </td>
+                        <td class="border border-gray-300 px-4 py-2 capitalize">{{ $item['category'] ?? '-' }}</td>
+                        <td class="border border-gray-300 px-4 py-2">{{ $item['location'] ?? '-' }}</td>
+                        <td class="border border-gray-300 px-4 py-2 capitalize">{{ str_replace('_', ' ', $item['status'] ?? '-') }}</td>
+                        @endif
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="5" class="border border-gray-300 px-4 py-8 text-center text-gray-500">Tidak ada data ditemukan.</td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
 
         <div class="mt-8 no-print text-center">
             <button onclick="window.print()" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition shadow-lg">

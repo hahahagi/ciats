@@ -152,13 +152,13 @@
     </nav>
 
     <!-- Mobile Overlay -->
-    <div id="mobileOverlay" class="overlay fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+    <div id="mobileOverlay" class="overlay fixed inset-0 bg-black bg-opacity-50 z-[60] lg:hidden"
         onclick="toggleMobileSidebar()">
     </div>
 
     <div class="flex">
         <!-- Sidebar Desktop -->
-        <aside class="sidebar-gradient w-64 min-h-screen fixed left-0 top-16 bottom-0 hidden lg:block shadow-2xl overflow-y-auto z-40">
+        <aside class="sidebar-gradient w-64 fixed left-0 top-16 bottom-0 hidden lg:block shadow-2xl overflow-y-auto z-40 pb-10">
             <div class="p-4">
                 <!-- Dashboard -->
                 <a href="/dashboard"
@@ -278,7 +278,7 @@
 
         <!-- Sidebar Mobile -->
         <aside id="mobileSidebar"
-            class="sidebar-mobile sidebar-gradient w-72 fixed inset-y-0 left-0 z-50 lg:hidden shadow-2xl overflow-y-auto">
+            class="sidebar-mobile sidebar-gradient w-72 fixed inset-y-0 left-0 z-[70] lg:hidden shadow-2xl overflow-y-auto pb-20">
             <div class="p-4">
                 <!-- Close Button -->
                 <div class="flex items-center justify-between mb-6">
@@ -315,6 +315,11 @@
                     @endif
 
                     @if(in_array($user['role'] ?? '', ['operator', 'admin']))
+                    <a href="{{ route('categories.index') }}"
+                        class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg mb-2 text-white {{ request()->routeIs('categories.*') ? 'active' : '' }}">
+                        <i class="fas fa-tags text-xl w-6"></i>
+                        <span>Kelola Kategori</span>
+                    </a>
                     <a href="{{ route('locations.index') }}"
                         class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg mb-2 text-white {{ request()->routeIs('locations.*') ? 'active' : '' }}">
                         <i class="fas fa-map-marker-alt text-xl w-6"></i>
@@ -356,6 +361,14 @@
                         class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg mb-2 text-white {{ request()->routeIs('transactions.allTransactions') ? 'active' : '' }}">
                         <i class="fas fa-list text-xl w-6"></i>
                         <span>Semua Transaksi</span>
+                    </a>
+                    @endif
+
+                    @if(in_array($user['role'] ?? '', ['operator', 'admin']))
+                    <a href="{{ route('reports.index') }}"
+                        class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg mb-2 text-white {{ request()->routeIs('reports.*') ? 'active' : '' }}">
+                        <i class="fas fa-file-alt text-xl w-6"></i>
+                        <span>Laporan</span>
                     </a>
                     @endif
                 </div>
