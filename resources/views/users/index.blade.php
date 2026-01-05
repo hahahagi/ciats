@@ -19,10 +19,11 @@
     </div>
 
     <!-- Stats -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+    <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 mb-6">
         @php
         $stats = [
         'total' => count($users),
+        'super_admin' => collect($users)->where('role', 'super_admin')->count(),
         'admin' => collect($users)->where('role', 'admin')->count(),
         'operator' => collect($users)->where('role', 'operator')->count(),
         'employee' => collect($users)->where('role', 'employee')->count(),
@@ -32,6 +33,11 @@
         <div class="bg-white rounded-lg shadow p-3 sm:p-4">
             <p class="text-xs sm:text-sm text-gray-500 mb-1">Total Users</p>
             <p class="text-xl sm:text-2xl font-bold text-blue-600">{{ $stats['total'] }}</p>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-3 sm:p-4">
+            <p class="text-xs sm:text-sm text-gray-500 mb-1">Super Admin</p>
+            <p class="text-xl sm:text-2xl font-bold text-purple-600">{{ $stats['super_admin'] }}</p>
         </div>
 
         <div class="bg-white rounded-lg shadow p-3 sm:p-4">
@@ -79,16 +85,17 @@
                         <td class="px-6 py-4">
                             @php
                             $roleConfig = [
-                            'admin' => ['bg' => 'bg-blue-100', 'text' => 'text-blue-700', 'icon' => 'fa-crown'],
-                            'operator' => ['bg' => 'bg-blue-100', 'text' => 'text-blue-700', 'icon' => 'fa-cog'],
-                            'employee' => ['bg' => 'bg-blue-100', 'text' => 'text-blue-700', 'icon' => 'fa-user'],
+                                'super_admin' => ['bg' => 'bg-purple-100', 'text' => 'text-purple-700', 'icon' => 'fa-user-shield'],
+                                'admin' => ['bg' => 'bg-blue-100', 'text' => 'text-blue-700', 'icon' => 'fa-crown'],
+                                'operator' => ['bg' => 'bg-green-100', 'text' => 'text-green-700', 'icon' => 'fa-cogs'],
+                                'employee' => ['bg' => 'bg-gray-100', 'text' => 'text-gray-700', 'icon' => 'fa-user'],
                             ];
                             $role = $roleConfig[$usr['role']] ?? $roleConfig['employee'];
                             @endphp
                             <span
                                 class="inline-flex items-center px-3 py-1 {{ $role['bg'] }} {{ $role['text'] }} rounded-full text-xs font-semibold">
                                 <i class="fas {{ $role['icon'] }} mr-1"></i>
-                                {{ ucfirst($usr['role']) }}
+                                {{ ucwords(str_replace('_', ' ', $usr['role'])) }}
                             </span>
                         </td>
                         <td class="px-6 py-4 text-sm text-gray-600">{{ $usr['created_at'] }}</td>
@@ -128,9 +135,10 @@
         @forelse($users as $usr)
         @php
         $roleConfig = [
-        'admin' => ['bg' => 'bg-blue-100', 'text' => 'text-blue-700', 'icon' => 'fa-crown'],
-        'operator' => ['bg' => 'bg-blue-100', 'text' => 'text-blue-700', 'icon' => 'fa-cog'],
-        'employee' => ['bg' => 'bg-blue-100', 'text' => 'text-blue-700', 'icon' => 'fa-user'],
+            'super_admin' => ['bg' => 'bg-purple-100', 'text' => 'text-purple-700', 'icon' => 'fa-user-shield'],
+            'admin' => ['bg' => 'bg-blue-100', 'text' => 'text-blue-700', 'icon' => 'fa-crown'],
+            'operator' => ['bg' => 'bg-green-100', 'text' => 'text-green-700', 'icon' => 'fa-cogs'],
+            'employee' => ['bg' => 'bg-gray-100', 'text' => 'text-gray-700', 'icon' => 'fa-user'],
         ];
         $role = $roleConfig[$usr['role']] ?? $roleConfig['employee'];
         @endphp
@@ -152,7 +160,7 @@
                 <span
                     class="inline-flex items-center px-3 py-1 {{ $role['bg'] }} {{ $role['text'] }} rounded-full text-xs font-semibold">
                     <i class="fas {{ $role['icon'] }} mr-1"></i>
-                    {{ ucfirst($usr['role']) }}
+                    {{ ucwords(str_replace('_', ' ', $usr['role'])) }}
                 </span>
             </div>
 

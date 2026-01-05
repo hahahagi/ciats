@@ -10,7 +10,7 @@
             <p class="text-gray-600">Kelola semua aset perusahaan</p>
         </div>
 
-        @if(in_array($user['role'], ['operator', 'admin']))
+        @if(in_array($user['role'], ['operator', 'admin', 'super_admin']))
         <a href="{{ route('assets.create') }}"
             class="mt-4 md:mt-0 inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-lg hover:shadow-lg transition">
             <i class="fas fa-plus mr-2"></i>
@@ -180,7 +180,7 @@
                         <i class="fas fa-eye mr-1"></i> Detail
                     </a>
 
-                    @if(in_array($user['role'], ['operator', 'admin']))
+                    @if(in_array($user['role'], ['operator', 'admin', 'super_admin']))
                     <a href="{{ route('assets.edit', $asset['id']) }}"
                         class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">
                         <i class="fas fa-edit"></i>

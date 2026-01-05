@@ -43,7 +43,6 @@ class UserController extends Controller
                 ->withDatabaseUri(config('firebase.database.url'));
 
             $this->database = $factory->createDatabase();
-
         } catch (\Exception $e) {
             Log::error('Firebase UserController error: ' . $e->getMessage());
             throw $e;
@@ -79,7 +78,6 @@ class UserController extends Controller
                 'title' => 'Manajemen User',
                 'user'  => Session::get('user'),
             ]);
-
         } catch (\Exception $e) {
             Log::error('Error fetching users: ' . $e->getMessage());
             return back()->with('error', 'Gagal mengambil data user.');
@@ -92,10 +90,18 @@ class UserController extends Controller
      */
     public function create()
     {
+        $currentUser = Session::get('user');
+        $roles = ['admin', 'operator', 'employee'];
+
+        // Hanya super_admin yang bisa membuat super_admin lain
+        if (($currentUser['role'] ?? '') === 'super_admin') {
+            array_unshift($roles, 'super_admin');
+        }
+
         return view('users.create', [
-            'roles' => ['admin', 'operator', 'employee'],
+            'roles' => $roles,
             'title' => 'Tambah User Baru',
-            'user'  => Session::get('user'),
+            'user'  => $currentUser,
         ]);
     }
 
@@ -109,8 +115,15 @@ class UserController extends Controller
             'name'     => 'required|string|max:100',
             'email'    => 'required|email|max:100',
             'password' => 'required|min:6|confirmed',
-            'role'     => 'required|in:admin,operator,employee',
+            'role'     => 'required|in:super_admin,admin,operator,employee',
         ]);
+
+        $currentUser = Session::get('user');
+
+        // Proteksi: Hanya super_admin yang bisa assign role super_admin
+        if ($request->role === 'super_admin' && ($currentUser['role'] ?? '') !== 'super_admin') {
+            return back()->withErrors(['role' => 'Anda tidak memiliki hak akses untuk membuat Super Admin.']);
+        }
 
         try {
             // Cek email duplikat
@@ -135,7 +148,6 @@ class UserController extends Controller
             ]);
 
             return redirect('/admin/users')->with('success', 'User berhasil ditambahkan!');
-
         } catch (\Exception $e) {
             Log::error('Error creating user: ' . $e->getMessage());
             return back()
@@ -157,6 +169,13 @@ class UserController extends Controller
                 return redirect('/admin/users')->with('error', 'User tidak ditemukan.');
             }
 
+            $currentUser = Session::get('user');
+            $roles = ['admin', 'operator', 'employee'];
+
+            if (($currentUser['role'] ?? '') === 'super_admin') {
+                array_unshift($roles, 'super_admin');
+            }
+
             return view('users.edit', [
                 'user' => [
                     'id'    => $id,
@@ -164,11 +183,10 @@ class UserController extends Controller
                     'email' => $userRef['email'] ?? '',
                     'role'  => $userRef['role'] ?? 'employee',
                 ],
-                'roles'        => ['admin', 'operator', 'employee'],
+                'roles'        => $roles,
                 'title'        => 'Edit User',
-                'current_user' => Session::get('user'),
+                'current_user' => $currentUser,
             ]);
-
         } catch (\Exception $e) {
             Log::error('Error editing user: ' . $e->getMessage());
             return redirect('/admin/users')->with('error', 'Gagal memuat data user.');
@@ -177,20 +195,32 @@ class UserController extends Controller
 
     /**
      * Update user
-     * Alur: Validasi input, cek duplikasi email (kecuali untuk user sendiri), update data di Firebase.
+     * Alur: Validasi input, cek duplikasi email, update data di Firebase.
      */
     public function update(Request $request, $id)
     {
         $request->validate([
             'name'  => 'required|string|max:100',
             'email' => 'required|email|max:100',
-            'role'  => 'required|in:admin,operator,employee',
+            'role'  => 'required|in:super_admin,admin,operator,employee',
         ]);
 
         try {
             $userRef = $this->database->getReference("users/{$id}")->getValue();
             if (!$userRef) {
                 return redirect('/admin/users')->with('error', 'User tidak ditemukan.');
+            }
+
+            $currentUser = Session::get('user');
+
+            // Proteksi: Hanya super_admin yang bisa assign role super_admin
+            if ($request->role === 'super_admin' && ($currentUser['role'] ?? '') !== 'super_admin') {
+                return back()->withErrors(['role' => 'Anda tidak memiliki hak akses untuk menjadikan user ini Super Admin.']);
+            }
+
+            // Proteksi: Admin biasa tidak bisa mengubah role milik Super Admin
+            if (($userRef['role'] ?? '') === 'super_admin' && ($currentUser['role'] ?? '') !== 'super_admin') {
+                return back()->withErrors(['role' => 'Anda tidak bisa mengubah data Super Admin.']);
             }
 
             // Cek email duplikat
@@ -221,7 +251,6 @@ class UserController extends Controller
             $this->database->getReference("users/{$id}")->update($updateData);
 
             return redirect('/admin/users')->with('success', 'User berhasil diperbarui!');
-
         } catch (\Exception $e) {
             Log::error('Error updating user: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Terjadi kesalahan.']);
@@ -230,14 +259,14 @@ class UserController extends Controller
 
     /**
      * Hapus user
-     * Alur: Cek role admin, cegah hapus akun sendiri, hapus dari Firebase jika valid.
      */
     public function destroy($id)
     {
         try {
             $currentUser = Session::get('user');
 
-            if (($currentUser['role'] ?? '') !== 'admin') {
+            // Izinkan admin dan super_admin
+            if (!in_array(($currentUser['role'] ?? ''), ['admin', 'super_admin'])) {
                 return redirect('/dashboard')->with('error', 'Akses ditolak!');
             }
 
@@ -247,10 +276,14 @@ class UserController extends Controller
                 return redirect('/admin/users')->with('error', 'Tidak dapat menghapus akun sendiri!');
             }
 
+            // Proteksi: Admin biasa tidak bisa menghapus Super Admin
+            if (($userToDelete['role'] ?? '') === 'super_admin' && ($currentUser['role'] ?? '') !== 'super_admin') {
+                return redirect('/admin/users')->with('error', 'AKSES DITOLAK: Hanya sesama Super Admin yang bisa menghapus Super Admin.');
+            }
+
             $this->database->getReference("users/{$id}")->remove();
 
             return redirect('/admin/users')->with('success', 'User berhasil dihapus!');
-
         } catch (\Exception $e) {
             Log::error('Error deleting user: ' . $e->getMessage());
             return redirect('/admin/users')->with('error', 'Gagal menghapus user.');

@@ -231,7 +231,7 @@ class TransactionController extends Controller
         $user = Session::get('user');
 
         // Hanya operator dan admin yang bisa akses
-        if (!in_array($user['role'], ['operator', 'admin'])) {
+        if (!in_array($user['role'], ['operator', 'admin', 'super_admin'])) {
             abort(403, 'Hanya operator dan admin yang bisa mengakses.');
         }
 
@@ -281,7 +281,7 @@ class TransactionController extends Controller
     {
         $user = Session::get('user');
 
-        if (!in_array($user['role'], ['operator', 'admin'])) {
+        if (!in_array($user['role'], ['operator', 'admin', 'super_admin'])) {
             abort(403, 'Hanya operator dan admin yang bisa approve.');
         }
 
@@ -314,7 +314,7 @@ class TransactionController extends Controller
     {
         $user = Session::get('user');
 
-        if (!in_array($user['role'], ['operator', 'admin'])) {
+        if (!in_array($user['role'], ['operator', 'admin', 'super_admin'])) {
             abort(403, 'Hanya operator dan admin yang bisa reject.');
         }
 
@@ -362,7 +362,7 @@ class TransactionController extends Controller
     {
         $user = Session::get('user');
 
-        if (!in_array($user['role'], ['operator', 'admin'])) {
+        if (!in_array($user['role'], ['operator', 'admin', 'super_admin'])) {
             abort(403, 'Hanya operator dan admin yang bisa checkout.');
         }
 
@@ -389,7 +389,7 @@ class TransactionController extends Controller
     {
         $user = Session::get('user');
 
-        if (!in_array($user['role'], ['operator', 'admin'])) {
+        if (!in_array($user['role'], ['operator', 'admin', 'super_admin'])) {
             abort(403, 'Hanya operator dan admin yang bisa checkout.');
         }
 
@@ -441,7 +441,7 @@ class TransactionController extends Controller
     {
         $user = Session::get('user');
 
-        if (!in_array($user['role'], ['operator', 'admin'])) {
+        if (!in_array($user['role'], ['operator', 'admin', 'super_admin'])) {
             abort(403, 'Hanya operator dan admin yang bisa checkin.');
         }
 
@@ -468,7 +468,7 @@ class TransactionController extends Controller
     {
         $user = Session::get('user');
 
-        if (!in_array($user['role'], ['operator', 'admin'])) {
+        if (!in_array($user['role'], ['operator', 'admin', 'super_admin'])) {
             abort(403, 'Hanya operator dan admin yang bisa checkin.');
         }
 
@@ -522,7 +522,7 @@ class TransactionController extends Controller
     {
         $user = Session::get('user');
 
-        if (!in_array($user['role'], ['operator', 'admin'])) {
+        if (!in_array($user['role'], ['operator', 'admin', 'super_admin'])) {
             abort(403, 'Hanya operator dan admin yang bisa melihat.');
         }
 
@@ -577,7 +577,7 @@ class TransactionController extends Controller
     {
         $user = Session::get('user');
 
-        if ($user['role'] != 'admin') {
+        if (!in_array($user['role'], ['admin', 'super_admin'])) {
             abort(403, 'Hanya admin yang bisa melihat semua transaksi.');
         }
 
@@ -614,7 +614,7 @@ class TransactionController extends Controller
     {
         $user = Session::get('user');
 
-        if (!in_array($user['role'], ['operator', 'admin'])) {
+        if (!in_array($user['role'], ['operator', 'admin', 'super_admin'])) {
             abort(403, 'Hanya operator dan admin yang bisa menggunakan scanner.');
         }
 
@@ -653,7 +653,7 @@ class TransactionController extends Controller
         try {
             $user = Session::get('user');
 
-            if (!in_array($user['role'], ['operator', 'admin'])) {
+            if (!in_array($user['role'], ['operator', 'admin', 'super_admin'])) {
                 return response()->json(['error' => 'Unauthorized'], 403);
             }
 

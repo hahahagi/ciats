@@ -48,11 +48,11 @@
                 <select name="role"
                     class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 text-sm sm:text-base"
                     required>
-                    <option value="admin" {{ old('role', $user['role']) == 'admin' ? 'selected' : '' }}>Admin</option>
-                    <option value="operator" {{ old('role', $user['role']) == 'operator' ? 'selected' : '' }}>Operator
-                    </option>
-                    <option value="employee" {{ old('role', $user['role']) == 'employee' ? 'selected' : '' }}>Employee
-                    </option>
+                    @foreach($roles as $roleOption)
+                        <option value="{{ $roleOption }}" {{ old('role', $user['role']) == $roleOption ? 'selected' : '' }}>
+                            {{ ucfirst(str_replace('_', ' ', $roleOption)) }}
+                        </option>
+                    @endforeach
                 </select>
                 @error('role')<p class="text-red-500 text-sm mt-1">{{ $message }}</p>@enderror
             </div>

@@ -130,7 +130,7 @@
                 <div class="flex items-center space-x-4">
                     <div class="hidden md:block text-right text-white">
                         <p class="text-sm font-medium">{{ $user['name'] ?? 'User' }}</p>
-                        <p class="text-xs text-purple-200 capitalize">{{ $user['role'] ?? 'employee' }}</p>
+                        <p class="text-xs text-purple-200 capitalize">{{ ucwords(str_replace('_', ' ', $user['role'] ?? 'employee')) }}</p>
                     </div>
 
                     <div class="relative group">
@@ -144,14 +144,14 @@
                             class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl py-2 z-50">
                             <div class="px-4 py-2 border-b md:hidden">
                                 <p class="font-medium text-gray-800">{{ $user['name'] ?? 'User' }}</p>
-                                <p class="text-xs text-gray-500 capitalize">{{ $user['role'] ?? 'employee' }}</p>
+                                <p class="text-xs text-gray-500 capitalize">{{ ucwords(str_replace('_', ' ', $user['role'] ?? 'employee')) }}</p>
                             </div>
                             <a href="/dashboard" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">
                                 <i class="fas fa-home mr-2"></i> Dashboard
                             </a>
-                            <form action="/logout" method="POST">
+                            <form action="/logout" method="POST" id="logoutForm">
                                 @csrf
-                                <button type="submit" class="w-full text-left px-4 py-2 text-red-600 hover:bg-red-100 hover:text-red-700 transition">
+                                <button type="button" onclick="confirmLogout()" class="w-full text-left px-4 py-2 text-red-600 hover:bg-red-100 hover:text-red-700 transition">
                                     <i class="fas fa-sign-out-alt mr-2"></i> Logout
                                 </button>
                             </form>
@@ -187,7 +187,7 @@
                         <span>Daftar Aset</span>
                     </a>
 
-                    @if(in_array($user['role'] ?? '', ['operator', 'admin']))
+                    @if(in_array($user['role'] ?? '', ['operator', 'admin', 'super_admin']))
                     <a href="{{ route('categories.index') }}"
                         class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg mb-2 text-white {{ request()->routeIs('categories.*') ? 'active' : '' }}">
                         <i class="fas fa-tags text-xl"></i>
@@ -218,7 +218,7 @@
                     </a>
                     @endif
 
-                    @if(in_array($user['role'] ?? '', ['operator', 'admin']))
+                    @if(in_array($user['role'] ?? '', ['operator', 'admin', 'super_admin']))
                     <a href="{{ route('transactions.pendingApprovals') }}"
                         class="sidebar-link flex items-center justify-between px-4 py-3 rounded-lg mb-2 text-white {{ request()->routeIs('transactions.pendingApprovals') ? 'active' : '' }}">
                         <div class="flex items-center space-x-3">
@@ -245,7 +245,7 @@
                     </a>
                     @endif
 
-                    @if(($user['role'] ?? '') == 'admin')
+                    @if(in_array($user['role'] ?? '', ['admin', 'super_admin']))
                     <a href="{{ route('transactions.allTransactions') }}"
                         class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg mb-2 text-white {{ request()->routeIs('transactions.allTransactions') ? 'active' : '' }}">
                         <i class="fas fa-list text-xl"></i>
@@ -253,7 +253,7 @@
                     </a>
                     @endif
 
-                    @if(in_array($user['role'] ?? '', ['operator', 'admin']))
+                    @if(in_array($user['role'] ?? '', ['operator', 'admin', 'super_admin']))
                     <a href="{{ route('reports.index') }}"
                         class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg mb-2 text-white {{ request()->routeIs('reports.*') ? 'active' : '' }}">
                         <i class="fas fa-file-alt text-xl"></i>
@@ -263,7 +263,7 @@
                 </div>
 
                 <!-- Scanner -->
-                @if(in_array($user['role'] ?? '', ['operator', 'admin']))
+                @if(in_array($user['role'] ?? '', ['operator', 'admin', 'super_admin']))
                 <div class="mt-4">
                     <a href="{{ route('scanner.index') }}"
                         class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg mb-2 text-white {{ request()->routeIs('scanner.index') ? 'active' : '' }}">
@@ -274,7 +274,7 @@
                 @endif
 
                 <!-- User Management -->
-                @if(($user['role'] ?? '') == 'admin')
+                @if(in_array($user['role'] ?? '', ['admin', 'super_admin']))
                 <div class="mt-4">
                     <p class="text-xs font-semibold text-purple-200 uppercase px-4 mb-2">Admin</p>
                     <a href="{{ route('admin.users.index') }}"
@@ -325,7 +325,7 @@
                     </a>
                     @endif
 
-                    @if(in_array($user['role'] ?? '', ['operator', 'admin']))
+                    @if(in_array($user['role'] ?? '', ['operator', 'admin', 'super_admin']))
                     <a href="{{ route('categories.index') }}"
                         class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg mb-2 text-white {{ request()->routeIs('categories.*') ? 'active' : '' }}">
                         <i class="fas fa-tags text-xl w-6"></i>
@@ -354,7 +354,7 @@
                     </a>
                     @endif
 
-                    @if(in_array($user['role'] ?? '', ['operator', 'admin']))
+                    @if(in_array($user['role'] ?? '', ['operator', 'admin', 'super_admin']))
                     <a href="{{ route('transactions.pendingApprovals') }}"
                         class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg mb-2 text-white {{ request()->routeIs('transactions.pendingApprovals') ? 'active' : '' }}">
                         <i class="fas fa-clock text-xl w-6"></i>
@@ -367,7 +367,7 @@
                     </a>
                     @endif
 
-                    @if(($user['role'] ?? '') == 'admin')
+                    @if(in_array($user['role'] ?? '', ['admin', 'super_admin']))
                     <a href="{{ route('transactions.allTransactions') }}"
                         class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg mb-2 text-white {{ request()->routeIs('transactions.allTransactions') ? 'active' : '' }}">
                         <i class="fas fa-list text-xl w-6"></i>
@@ -375,7 +375,7 @@
                     </a>
                     @endif
 
-                    @if(in_array($user['role'] ?? '', ['operator', 'admin']))
+                    @if(in_array($user['role'] ?? '', ['operator', 'admin', 'super_admin']))
                     <a href="{{ route('reports.index') }}"
                         class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg mb-2 text-white {{ request()->routeIs('reports.*') ? 'active' : '' }}">
                         <i class="fas fa-file-alt text-xl w-6"></i>
@@ -384,7 +384,7 @@
                     @endif
                 </div>
 
-                @if(in_array($user['role'] ?? '', ['operator', 'admin']))
+                @if(in_array($user['role'] ?? '', ['operator', 'admin', 'super_admin']))
                 <div class="mt-4">
                     <a href="{{ route('scanner.index') }}"
                         class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg mb-2 text-white {{ request()->routeIs('scanner.index') ? 'active' : '' }}">
@@ -394,7 +394,7 @@
                 </div>
                 @endif
 
-                @if(($user['role'] ?? '') == 'admin')
+                @if(in_array($user['role'] ?? '', ['admin', 'super_admin']))
                 <div class="mt-4">
                     <p class="text-xs font-semibold text-purple-200 uppercase px-4 mb-2">Admin</p>
                     <a href="{{ route('admin.users.index') }}"
@@ -489,6 +489,23 @@
             toggleMobileSidebar();
         });
     });
+
+    function confirmLogout() {
+        Swal.fire({
+            title: 'Yakin ingin keluar?',
+            text: "Anda harus login kembali untuk mengakses sistem.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Ya, Logout!',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById('logoutForm').submit();
+            }
+        })
+    }
     </script>
 </body>
 

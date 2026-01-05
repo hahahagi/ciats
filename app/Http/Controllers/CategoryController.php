@@ -31,7 +31,7 @@ class CategoryController extends Controller
     public function index()
     {
         $user = Session::get('user');
-        if (!in_array($user['role'], ['operator', 'admin'])) {
+        if (!in_array($user['role'], ['operator', 'admin', 'super_admin'])) {
             abort(403, 'Unauthorized');
         }
 

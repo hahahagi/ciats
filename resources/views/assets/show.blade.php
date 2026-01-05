@@ -218,7 +218,7 @@
                         }
                     @endphp
 
-                    @if(in_array($user['role'], ['operator', 'admin']))
+                    @if(in_array($user['role'], ['operator', 'admin', 'super_admin']))
                         @if($pendingCheckout)
                         <a href="{{ route('transactions.checkoutForm', $pendingCheckout['id']) }}"
                             class="flex items-center justify-center space-x-2 w-full px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition shadow-md animate-pulse">

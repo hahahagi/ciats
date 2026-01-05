@@ -8,10 +8,10 @@
     <div style="display: flex; justify-content: space-between; align-items: center;">
         <div>
             <h2 style="margin: 0 0 8px 0; font-weight: 700; font-size: 28px;">Selamat Datang, {{ $user['name'] }}! 👋</h2>
-            <p style="margin: 0; opacity: 0.95; font-size: 14px;">Anda login sebagai <strong style="text-transform: capitalize;">{{ $user['role'] }}</strong></p>
+            <p style="margin: 0; opacity: 0.95; font-size: 14px;">Anda login sebagai <strong style="text-transform: capitalize;">{{ ucwords(str_replace('_', ' ', $user['role'])) }}</strong></p>
         </div>
         <div style="font-size: 60px; opacity: 0.9;">
-            @if($user['role'] == 'admin')
+            @if(in_array($user['role'], ['admin', 'super_admin']))
                 <i class="bi bi-shield-lock"></i>
             @elseif($user['role'] == 'operator')
                 <i class="bi bi-person-badge"></i>
@@ -23,13 +23,13 @@
 </div>
 
 <!-- Quick Stats -->
-@if(in_array($user['role'], ['admin', 'operator']))
+@if(in_array($user['role'], ['admin', 'operator', 'super_admin']))
 <div class="row mb-30" style="margin-bottom: 30px;">
     @php
     $assetsRef = app('firebase.database')->getReference('assets')->getValue();
     $totalAssets = $assetsRef ? count($assetsRef) : 0;
     $transactionsRef = app('firebase.database')->getReference('transactions')->getValue();
-    
+
     $pending = 0;
     $active = 0;
     if ($transactionsRef) {
@@ -39,7 +39,7 @@
         }
     }
     @endphp
-    
+
     <div class="col-md-6 col-lg-3" style="margin-bottom: 15px;">
         <div class="stat-card" style="border-top-color: #667eea; border-top-width: 5px;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -141,7 +141,7 @@
                 </div>
             @endif
 
-            @if(in_array($user['role'], ['operator', 'admin']))
+            @if(in_array($user['role'], ['operator', 'admin', 'super_admin']))
                 <div style="flex: 0 1 calc(33.333% - 10px); min-width: 250px;">
                     <a href="{{ route('assets.index') }}" class="quick-action-card" style="text-decoration: none; color: inherit; display: block; height: 100%;">
                         <div class="quick-action-icon">

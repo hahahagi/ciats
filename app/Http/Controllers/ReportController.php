@@ -51,7 +51,7 @@ class ReportController extends Controller
     public function index()
     {
         $user = Session::get('user');
-        if (!in_array($user['role'], ['operator', 'admin'])) {
+        if (!in_array($user['role'], ['operator', 'admin', 'super_admin'])) {
             abort(403, 'Unauthorized');
         }
 
@@ -68,7 +68,7 @@ class ReportController extends Controller
     public function generate(Request $request)
     {
         $user = Session::get('user');
-        if (!in_array($user['role'], ['operator', 'admin'])) {
+        if (!in_array($user['role'], ['operator', 'admin', 'super_admin'])) {
             abort(403, 'Unauthorized');
         }
 
@@ -98,7 +98,7 @@ class ReportController extends Controller
     public function exportCsv(Request $request)
     {
         $user = Session::get('user');
-        if (!in_array($user['role'], ['operator', 'admin'])) {
+        if (!in_array($user['role'], ['operator', 'admin', 'super_admin'])) {
             abort(403, 'Unauthorized');
         }
 
