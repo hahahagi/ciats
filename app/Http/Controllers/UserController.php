@@ -8,10 +8,27 @@ use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Log;
 use Kreait\Firebase\Factory;
 
+/**
+ * Controller UserController
+ *
+ * Alur kerja:
+ * 1. Konstruktor menginisialisasi koneksi Firebase dan memeriksa keberadaan file kredensial.
+ * 2. Method index mengambil semua user dari Firebase dan menampilkan daftar user.
+ * 3. Method create menampilkan form untuk menambah user baru.
+ * 4. Method store memvalidasi input, memeriksa duplikasi email, dan menyimpan user baru ke Firebase.
+ * 5. Method edit mengambil data user berdasarkan ID dan menampilkan form edit.
+ * 6. Method update memvalidasi input, memeriksa duplikasi email, dan memperbarui data user di Firebase.
+ * 7. Method destroy memeriksa role admin, mencegah penghapusan akun sendiri, dan menghapus user dari Firebase.
+ *
+ * Tujuan: Mengelola operasi CRUD untuk user menggunakan Firebase sebagai penyimpanan data.
+ */
 class UserController extends Controller
 {
     protected $database;
 
+    /**
+     * Konstruktor: Setup koneksi Firebase dan validasi kredensial
+     */
     public function __construct()
     {
         try {
@@ -35,6 +52,7 @@ class UserController extends Controller
 
     /**
      * Menampilkan semua user
+     * Alur: Ambil data users dari Firebase, format data, tampilkan view index.
      */
     public function index()
     {
@@ -70,6 +88,7 @@ class UserController extends Controller
 
     /**
      * Form tambah user
+     * Alur: Tampilkan view create dengan daftar roles.
      */
     public function create()
     {
@@ -82,6 +101,7 @@ class UserController extends Controller
 
     /**
      * Simpan user baru
+     * Alur: Validasi input, cek duplikasi email, simpan ke Firebase jika valid.
      */
     public function store(Request $request)
     {
@@ -126,6 +146,7 @@ class UserController extends Controller
 
     /**
      * Form edit user
+     * Alur: Ambil data user berdasarkan ID dari Firebase, tampilkan view edit jika ditemukan.
      */
     public function edit($id)
     {
@@ -156,6 +177,7 @@ class UserController extends Controller
 
     /**
      * Update user
+     * Alur: Validasi input, cek duplikasi email (kecuali untuk user sendiri), update data di Firebase.
      */
     public function update(Request $request, $id)
     {
@@ -208,6 +230,7 @@ class UserController extends Controller
 
     /**
      * Hapus user
+     * Alur: Cek role admin, cegah hapus akun sendiri, hapus dari Firebase jika valid.
      */
     public function destroy($id)
     {

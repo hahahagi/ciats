@@ -9,10 +9,25 @@ use Illuminate\Routing\Controller;
 use Carbon\Carbon;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
+/**
+ * Controller ReportController
+ *
+ * Alur kerja:
+ * 1. Konstruktor menginisialisasi koneksi Firebase dan middleware untuk cek session user.
+ * 2. Method index menampilkan form laporan dengan validasi role (operator/admin).
+ * 3. Method generate memvalidasi input tanggal dan type, mengambil data dari Firebase via getReportData, dan menampilkan view print.
+ * 4. Method exportCsv memvalidasi input, mengambil data, dan mengekspor sebagai file CSV.
+ * 5. Method getReportData (private) query Firebase berdasarkan type (transactions/assets), filter berdasarkan tanggal dan status.
+ *
+ * Tujuan: Menggenerate dan mengekspor laporan transaksi atau aset dari Firebase berdasarkan filter tanggal dan status.
+ */
 class ReportController extends Controller
 {
     protected $database;
 
+    /**
+     * Konstruktor: Setup Firebase dan middleware auth
+     */
     public function __construct()
     {
         $factory = (new Factory)
@@ -29,6 +44,10 @@ class ReportController extends Controller
         });
     }
 
+    /**
+     * Tampilkan form laporan
+     * Alur: Cek role operator/admin, tampilkan view index jika valid.
+     */
     public function index()
     {
         $user = Session::get('user');
@@ -42,6 +61,10 @@ class ReportController extends Controller
         ]);
     }
 
+    /**
+     * Generate laporan
+     * Alur: Validasi input, ambil data via getReportData, tampilkan view print.
+     */
     public function generate(Request $request)
     {
         $user = Session::get('user');
@@ -68,6 +91,10 @@ class ReportController extends Controller
         ]);
     }
 
+    /**
+     * Export laporan sebagai CSV
+     * Alur: Validasi input, ambil data, stream response sebagai file CSV.
+     */
     public function exportCsv(Request $request)
     {
         $user = Session::get('user');
@@ -128,6 +155,10 @@ class ReportController extends Controller
         return $response;
     }
 
+    /**
+     * Ambil data laporan dari Firebase
+     * Alur: Parse tanggal, query Firebase berdasarkan type, filter tanggal dan status, sort jika perlu.
+     */
     private function getReportData(Request $request)
     {
         $startDate = Carbon::parse($request->start_date)->startOfDay()->timestamp;

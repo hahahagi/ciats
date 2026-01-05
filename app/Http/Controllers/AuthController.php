@@ -8,10 +8,25 @@ use Illuminate\Support\Facades\Session;
 use Kreait\Firebase\Factory;
 use Kreait\Firebase\Database;
 
+/**
+ * Controller AuthController
+ *
+ * Alur kerja:
+ * 1. Konstruktor menginisialisasi koneksi ke Firebase database menggunakan kredensial dari config.
+ * 2. Method showLogin menampilkan form login, atau redirect ke dashboard jika sudah login.
+ * 3. Method login memvalidasi input, mencari user di Firebase berdasarkan email, verifikasi password dengan Hash::check, dan set session jika berhasil.
+ * 4. Method logout membersihkan session dan redirect ke login.
+ * 5. Method dashboard memeriksa session, mengambil statistik dan aktivitas dari Firebase, dan menampilkan dashboard sesuai role user.
+ *
+ * Tujuan: Mengelola autentikasi pengguna menggunakan Firebase sebagai penyimpanan data, dan menampilkan dashboard dengan statistik real-time.
+ */
 class AuthController extends Controller
 {
     protected $database;
 
+    /**
+     * Konstruktor: Inisialisasi koneksi Firebase
+     */
     public function __construct()
     {
         $factory = (new Factory)
@@ -21,7 +36,10 @@ class AuthController extends Controller
         $this->database = $factory->createDatabase();
     }
 
-    // Menampilkan form login
+    /**
+     * Menampilkan form login
+     * Alur: Cek session, jika sudah login redirect dashboard, jika tidak tampilkan view login.
+     */
     public function showLogin()
     {
         if (Session::has('user')) {
@@ -30,7 +48,10 @@ class AuthController extends Controller
         return view('auth.login');
     }
 
-    // Proses login
+    /**
+     * Proses login
+     * Alur: Validasi input, ambil users dari Firebase, loop cek email dan password, set session jika cocok, redirect dashboard.
+     */
     public function login(Request $request)
     {
         $request->validate([
@@ -72,14 +93,20 @@ class AuthController extends Controller
         }
     }
 
-    // Logout
+    /**
+     * Logout
+     * Alur: Flush semua session, redirect ke login dengan pesan sukses.
+     */
     public function logout()
     {
         Session::flush();
         return redirect('/login')->with('success', 'Logout berhasil!');
     }
 
-    // Dashboard berdasarkan role
+    /**
+     * Dashboard berdasarkan role
+     * Alur: Cek session, fetch stats dari Firebase (assets, transactions, users), ambil recent activities, tampilkan view dashboard.
+     */
     public function dashboard()
     {
         if (!Session::has('user')) {
@@ -101,7 +128,7 @@ class AuthController extends Controller
         ];
 
         try {
-            // 1. Total Assets & Available
+            // 1. Total Assets & Available: Loop assets, hitung total dan available
             $assetsRef = $this->database->getReference('assets')->getValue();
             if ($assetsRef) {
                 foreach ($assetsRef as $asset) {
@@ -112,7 +139,7 @@ class AuthController extends Controller
                 }
             }
 
-            // 2. Transactions Stats
+            // 2. Transactions Stats: Loop transactions, hitung borrowed, pending, dan stats user
             $transactionsRef = $this->database->getReference('transactions')->getValue();
             if ($transactionsRef) {
                 foreach ($transactionsRef as $transaction) {
@@ -138,11 +165,11 @@ class AuthController extends Controller
                 }
             }
 
-            // 3. Total Users
+            // 3. Total Users: Hitung jumlah children di users
             $usersRef = $this->database->getReference('users')->getSnapshot();
             $stats['total_users'] = $usersRef->numChildren();
 
-            // 4. Recent Activities
+            // 4. Recent Activities: Ambil 5 transaksi terbaru berdasarkan timestamp
             $activities = [];
             if ($transactionsRef) {
                 foreach ($transactionsRef as $id => $transaction) {

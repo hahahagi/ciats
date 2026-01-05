@@ -20,9 +20,11 @@
             </div>
         </div>
 
+        {{-- Form ini mengirim data ke controller UserController@store untuk membuat akun baru --}}
         <form action="{{ route('admin.users.store') }}" method="POST" class="space-y-5">
             @csrf
 
+            {{-- Field untuk input nama pengguna --}}
             <div>
                 <label class="block text-gray-700 font-medium mb-2 text-sm sm:text-base">
                     <i class="fas fa-user text-blue-600 mr-2"></i>
@@ -34,6 +36,7 @@
                 @error('name')<p class="text-red-500 text-sm mt-1">{{ $message }}</p>@enderror
             </div>
 
+            {{-- Field untuk input email pengguna --}}
             <div>
                 <label class="block text-gray-700 font-medium mb-2 text-sm sm:text-base">
                     <i class="fas fa-envelope text-blue-600 mr-2"></i>
@@ -45,6 +48,7 @@
                 @error('email')<p class="text-red-500 text-sm mt-1">{{ $message }}</p>@enderror
             </div>
 
+            {{-- Field untuk memilih role pengguna --}}
             <div>
                 <label class="block text-gray-700 font-medium mb-2 text-sm sm:text-base">
                     <i class="fas fa-user-tag text-blue-600 mr-2"></i>
@@ -61,6 +65,7 @@
                 @error('role')<p class="text-red-500 text-sm mt-1">{{ $message }}</p>@enderror
             </div>
 
+            {{-- Field untuk input password pengguna --}}
             <div>
                 <label class="block text-gray-700 font-medium mb-2 text-sm sm:text-base">
                     <i class="fas fa-lock text-blue-600 mr-2"></i>
@@ -73,6 +78,7 @@
                 <p class="text-xs sm:text-sm text-gray-500 mt-1">Minimal 6 karakter</p>
             </div>
 
+            {{-- Field untuk konfirmasi password --}}
             <div>
                 <label class="block text-gray-700 font-medium mb-2 text-sm sm:text-base">
                     <i class="fas fa-lock text-blue-600 mr-2"></i>
@@ -83,6 +89,7 @@
                     placeholder="••••••••" required>
             </div>
 
+            {{-- Info box yang menjelaskan bahwa user baru bisa login dengan email dan password --}}
             <div class="bg-blue-50 border-l-4 border-blue-500 p-3 sm:p-4 rounded-lg">
                 <p class="text-xs sm:text-sm text-blue-800">
                     <i class="fas fa-info-circle mr-2"></i>
@@ -90,6 +97,7 @@
                 </p>
             </div>
 
+            {{-- Button submit untuk menyimpan user baru dan button cancel untuk kembali ke list user --}}
             <div class="flex flex-col sm:flex-row gap-3 pt-4">
                 <button type="submit"
                     class="flex-1 px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition text-sm sm:text-base">

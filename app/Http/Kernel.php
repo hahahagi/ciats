@@ -4,6 +4,17 @@ namespace App\Http;
 
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
 
+/**
+ * Class Kernel
+ *
+ * Alur kerja Middleware di Laravel:
+ * 1. Global middleware ($middleware) dijalankan untuk setiap request ke aplikasi.
+ * 2. Middleware grup ($middlewareGroups) dijalankan berdasarkan jenis route (web atau api).
+ * 3. Middleware route ($routeMiddleware) dapat ditetapkan secara individual pada route tertentu.
+ * 4. Middleware diproses secara berurutan, dan jika salah satu gagal, request dihentikan.
+ *
+ * Tujuan: Mengatur urutan dan penerapan middleware untuk keamanan, autentikasi, dan pemrosesan request.
+ */
 class Kernel extends HttpKernel
 {
     /**
