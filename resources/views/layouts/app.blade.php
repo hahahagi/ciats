@@ -85,6 +85,17 @@
         opacity: 1;
         pointer-events: all;
     }
+
+    /* Hide scrollbar for Chrome, Safari and Opera */
+    .no-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+
+    /* Hide scrollbar for IE, Edge and Firefox */
+    .no-scrollbar {
+        -ms-overflow-style: none;  /* IE and Edge */
+        scrollbar-width: none;  /* Firefox */
+    }
     </style>
 </head>
 
@@ -158,7 +169,7 @@
 
     <div class="flex">
         <!-- Sidebar Desktop -->
-        <aside class="sidebar-gradient w-64 fixed left-0 top-16 bottom-0 hidden lg:block shadow-2xl overflow-y-auto z-40 pb-10">
+        <aside class="sidebar-gradient w-64 fixed left-0 top-16 bottom-0 hidden lg:block shadow-2xl overflow-y-auto no-scrollbar z-40 pb-10">
             <div class="p-4">
                 <!-- Dashboard -->
                 <a href="/dashboard"
@@ -278,7 +289,7 @@
 
         <!-- Sidebar Mobile -->
         <aside id="mobileSidebar"
-            class="sidebar-mobile sidebar-gradient w-72 fixed inset-y-0 left-0 z-[70] lg:hidden shadow-2xl overflow-y-auto pb-20">
+            class="sidebar-mobile sidebar-gradient w-72 fixed inset-y-0 left-0 z-[70] lg:hidden shadow-2xl overflow-y-auto no-scrollbar pb-20">
             <div class="p-4">
                 <!-- Close Button -->
                 <div class="flex items-center justify-between mb-6">
