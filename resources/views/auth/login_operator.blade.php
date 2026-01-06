@@ -27,7 +27,7 @@
     }
 
     .gradient-bg {
-        background: #059669; /* Emerald 600 */
+        background: #3b82f6;
     }
 
     .glass-effect {
@@ -36,19 +36,18 @@
     }
 
     .input-focus:focus {
-        border-color: #059669;
-        box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1);
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
     }
 
     .btn-primary {
-        background: #047857; /* Emerald 700 */
+        background: #3b82f6;
         transition: all 0.3s ease;
     }
 
     .btn-primary:hover {
-        background: #065f46; /* Emerald 800 */
         transform: translateY(-2px);
-        box-shadow: 0 10px 20px rgba(5, 150, 105, 0.3);
+        box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
     }
 
     .float-animation {
@@ -69,10 +68,10 @@
         <!-- Logo & Title -->
         <div class="text-center mb-8 float-animation">
             <div class="inline-block bg-white p-4 rounded-2xl shadow-2xl mb-4">
-                <i class="fas fa-headset text-emerald-600 text-5xl"></i>
+                <i class="fas fa-headset text-blue-600 text-5xl"></i>
             </div>
             <h1 class="text-4xl font-bold text-white mb-2">CIATS</h1>
-            <p class="text-emerald-100">Operator Portal</p>
+            <p class="text-blue-100">Operator Portal</p>
         </div>
 
         <div class="glass-effect rounded-2xl shadow-2xl p-8">
@@ -112,7 +111,7 @@
 
                 <div class="mb-5">
                     <label class="block text-gray-700 font-medium mb-2">
-                        <i class="fas fa-envelope text-emerald-600 mr-2"></i>
+                        <i class="fas fa-envelope text-blue-600 mr-2"></i>
                         Email
                     </label>
                     <input type="email" name="email" value="{{ old('email') }}"
@@ -122,7 +121,7 @@
 
                 <div class="mb-6">
                     <label class="block text-gray-700 font-medium mb-2">
-                        <i class="fas fa-lock text-emerald-600 mr-2"></i>
+                        <i class="fas fa-lock text-blue-600 mr-2"></i>
                         Password
                     </label>
                     <div class="relative">
@@ -143,7 +142,7 @@
             </form>
         </div>
 
-        <p class="text-center text-emerald-100 text-sm mt-6">
+        <p class="text-center text-blue-100 text-sm mt-6">
             © 2026 CIATS - Corporate IT Asset Tracking System
         </p>
     </div>

@@ -23,11 +23,8 @@ Route::get('/', function () {
     return redirect('/login');
 });
 
-Route::get('/login', function () {
-    return redirect()->route('login.employee');
-});
-
-Route::get('/login/employee', [AuthController::class, 'showLoginEmployee'])->name('login.employee');
+Route::get('/login', [AuthController::class, 'showLoginEmployee'])->name('login.employee');
+// Route::get('/login/employee', [AuthController::class, 'showLoginEmployee'])->name('login.employee'); // Removed as per request
 Route::get('/login/admin', [AuthController::class, 'showLoginAdmin'])->name('login.admin');
 Route::get('/login/operator', [AuthController::class, 'showLoginOperator'])->name('login.operator');
 Route::get('/login/super_admin', [AuthController::class, 'showLoginSuperAdmin'])->name('login.super_admin');
