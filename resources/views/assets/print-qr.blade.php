@@ -78,8 +78,9 @@
     <!-- Print Area -->
     <div id="printArea" class="max-w-4xl mx-auto bg-white shadow-xl">
 
+        @foreach($itemsToPrint as $index => $item)
         <!-- Single QR Label (Full Page) -->
-        <div class="print-area p-12 text-center">
+        <div class="print-area p-12 text-center {{ $index > 0 ? 'page-break-before' : '' }}" style="page-break-after: always;">
 
             <!-- Company Header -->
             <div class="mb-8 pb-6 border-b-2 border-gray-200">
@@ -88,30 +89,22 @@
             </div>
 
             <!-- QR Code -->
-            <div class="mb-8">
-                @if(!empty($asset['qr_code_url']))
-                <img id="qrImage" src="{{ $asset['qr_code_url'] }}" alt="QR Code" class="mx-auto"
-                    style="width: 300px; height: 300px;">
-                @else
-                <div class="w-72 h-72 mx-auto bg-gray-200 rounded-lg flex items-center justify-center">
-                    <div class="text-center">
-                        <i class="fas fa-qrcode text-gray-400 text-6xl mb-3"></i>
-                        <p class="text-gray-500">QR Code Not Available</p>
-                    </div>
+            <div class="mb-8 flex justify-center">
+                <div class="bg-white p-2 inline-block">
+                    {!! SimpleSoftwareIO\QrCode\Facades\QrCode::size(300)->generate($item['serial']) !!}
                 </div>
-                @endif
             </div>
 
             <!-- Asset Information -->
             <div class="space-y-4 text-left max-w-md mx-auto">
                 <div class="bg-gray-50 p-4 rounded-lg">
                     <p class="text-sm text-gray-500 mb-1">Asset Name</p>
-                    <p class="text-xl font-bold text-gray-800">{{ $asset['name'] ?? 'Unknown Asset' }}</p>
+                    <p class="text-xl font-bold text-gray-800">{{ $assetName ?? 'Unknown Asset' }}</p>
                 </div>
 
                 <div class="bg-gray-50 p-4 rounded-lg">
                     <p class="text-sm text-gray-500 mb-1">Serial Number</p>
-                    <p class="text-lg font-mono font-bold text-gray-800">{{ $asset['serial_number'] ?? '-' }}</p>
+                    <p class="text-lg font-mono font-bold text-gray-800">{{ $item['serial'] ?? '-' }}</p>
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
@@ -133,27 +126,8 @@
                 <p class="mt-2">Generated: {{ date('d M Y, H:i') }}</p>
             </div>
         </div>
+        @endforeach
 
-        <!-- Small Labels Grid (Commented - Alternative Layout) -->
-        <!--
-        <div class="grid grid-cols-2 gap-8 p-8">
-            @for($i = 0; $i < 6; $i++)
-            <div class="print-area border-2 border-dashed border-gray-300 p-6 text-center">
-                <div class="mb-3">
-                    @if(!empty($asset['qr_code_url']))
-                    <img src="{{ $asset['qr_code_url'] }}"
-                         alt="QR Code"
-                         class="mx-auto"
-                         style="width: 150px; height: 150px;">
-                    @endif
-                </div>
-
-                <p class="font-bold text-sm mb-1">{{ $asset['name'] ?? 'Unknown' }}</p>
-                <p class="text-xs font-mono text-gray-600">{{ $asset['serial_number'] ?? '-' }}</p>
-            </div>
-            @endfor
-        </div>
-        -->
     </div>
 
     <!-- Instructions (No Print) -->
@@ -206,8 +180,13 @@
             <p style="color: #6b7280; font-size: 12px; margin-bottom: 20px;">Corporate IT Asset Tracking System</p>
 
             <div style="margin-bottom: 20px; display: flex; justify-content: center;">
-                @if(!empty($asset['qr_code_url']))
-                <img src="{{ $asset['qr_code_url'] }}" alt="QR Code" style="width: 200px; height: 200px;">
+                @php
+                    $jpgSerial = !empty($itemsToPrint) && count($itemsToPrint) > 0 ? $itemsToPrint[0]['serial'] : ($asset['serial_number'] ?? null);
+                @endphp
+                @if($jpgSerial)
+                    <div style="background: white; padding: 5px;">
+                        {!! SimpleSoftwareIO\QrCode\Facades\QrCode::size(200)->generate($jpgSerial) !!}
+                    </div>
                 @else
                 <div style="width: 200px; height: 200px; background: #e5e7eb; display: flex; align-items: center; justify-content: center; margin: 0 auto;">
                     <span style="color: #9ca3af;">No QR</span>
@@ -222,7 +201,7 @@
                 </div>
                 <div>
                     <p style="font-size: 10px; color: #6b7280; margin-bottom: 2px;">Serial Number</p>
-                    <p style="font-size: 14px; font-family: monospace; font-weight: bold; color: #1f2937; margin: 0;">{{ $asset['serial_number'] ?? '-' }}</p>
+                    <p style="font-size: 14px; font-family: monospace; font-weight: bold; color: #1f2937; margin: 0;">{{ $jpgSerial ?? '-' }}</p>
                 </div>
             </div>
 
@@ -278,7 +257,7 @@
 
                 // Trigger download
                 const link = document.createElement('a');
-                link.download = 'Asset-{{ $asset["serial_number"] ?? "QR" }}.jpg';
+                link.download = 'Asset-{{ !empty($itemsToPrint) ? $itemsToPrint[0]['serial'] : ($asset['serial_number'] ?? 'QR') }}.jpg';
                 link.href = jpgUrl;
                 document.body.appendChild(link);
                 link.click();

@@ -9,6 +9,11 @@
         @media print {
             .no-print { display: none; }
             body { -webkit-print-color-adjust: exact; }
+
+            /* Remove scrollbars in print/pdf */
+            .overflow-x-auto {
+                overflow: visible !important;
+            }
         }
     </style>
 </head>
@@ -41,6 +46,8 @@
                         <th class="border border-gray-300 px-4 py-2">Peminjam</th>
                         <th class="border border-gray-300 px-4 py-2">Aset</th>
                         <th class="border border-gray-300 px-4 py-2">Status</th>
+                        <th class="border border-gray-300 px-4 py-2">Tgl Kembali</th>
+                        <th class="border border-gray-300 px-4 py-2">Kondisi Akhir</th>
                         @else
                         <th class="border border-gray-300 px-4 py-2">Nama Aset</th>
                         <th class="border border-gray-300 px-4 py-2">Kategori</th>
@@ -72,6 +79,12 @@
                                    (($item['status'] ?? '') == 'approved' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800')) }}">
                                 {{ ucfirst($item['status'] ?? '-') }}
                             </span>
+                        </td>
+                        <td class="border border-gray-300 px-4 py-2">
+                             {{ !empty($item['actual_return_date']) ? date('d M Y H:i', $item['actual_return_date']) : '-' }}
+                        </td>
+                        <td class="border border-gray-300 px-4 py-2">
+                             {{ ucfirst($item['condition_after'] ?? '-') }}
                         </td>
                         @else
                         <td class="border border-gray-300 px-4 py-2">

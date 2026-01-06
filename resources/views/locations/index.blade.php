@@ -31,11 +31,10 @@
                        class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition" title="Edit">
                         <i class="fas fa-edit"></i>
                     </a>
-                    <form action="{{ route('locations.destroy', $location['id']) }}" method="POST"
-                          onsubmit="return confirm('Yakin ingin menghapus lokasi ini?');">
+                    <form action="{{ route('locations.destroy', $location['id']) }}" method="POST" class="inline-block">
                         @csrf
                         @method('DELETE')
-                        <button type="submit" class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition" title="Hapus">
+                        <button type="button" onclick="confirmDeleteLocation(this)" class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition" title="Hapus">
                             <i class="fas fa-trash"></i>
                         </button>
                     </form>
@@ -61,3 +60,22 @@
     </div>
 </div>
 @endsection
+
+<script>
+    function confirmDeleteLocation(button) {
+        Swal.fire({
+            title: 'Yakin ingin menghapus lokasi ini?',
+            text: "Data yang dihapus tidak dapat dikembalikan!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Ya, Hapus!',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                button.closest('form').submit();
+            }
+        });
+    }
+</script>

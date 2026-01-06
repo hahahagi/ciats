@@ -22,8 +22,8 @@
     <!-- Stats Cards -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
 
-        @if($user['role'] == 'admin')
-        <!-- Admin Stats -->
+        @if(in_array($user['role'], ['admin', 'super_admin']))
+        <!-- Admin & Super Admin Stats -->
         <div class="bg-white rounded-xl shadow-lg p-6 card-hover">
             <div class="flex items-center justify-between">
                 <div>
@@ -247,7 +247,7 @@
                     <i class="fas fa-chevron-right text-gray-400"></i>
                 </a>
 
-                @elseif($user['role'] == 'admin')
+                @elseif(in_array($user['role'], ['admin', 'super_admin']))
                 <a href="{{ route('admin.users.index') }}"
                     class="flex items-center justify-between p-4 bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg hover:shadow-md transition">
                     <div class="flex items-center space-x-3">

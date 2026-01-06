@@ -26,7 +26,7 @@
             <div class="bg-purple-50 rounded-lg p-4">
                 <p class="text-sm text-purple-700 font-semibold mb-2">ASET</p>
                 <p class="font-bold text-gray-800 text-lg">{{ $asset['name'] ?? 'Unknown' }}</p>
-                <p class="text-sm text-gray-600 font-mono">{{ $asset['serial_number'] ?? '-' }}</p>
+                <p class="text-sm text-gray-600 capitalize">{{ $asset['category'] ?? '-' }}</p>
             </div>
 
             <div class="bg-blue-50 rounded-lg p-4">
@@ -38,6 +38,23 @@
 
         <form action="{{ route('transactions.processCheckout', $transactionId) }}" method="POST" class="space-y-6">
             @csrf
+
+            <!-- Item Selection -->
+            <div>
+                 <label class="block text-gray-700 font-medium mb-2">
+                    <i class="fas fa-barcode text-purple-600 mr-2"></i>
+                    Pilih Unit Barang <span class="text-red-500">*</span>
+                </label>
+                <select name="item_id" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-purple-500" required>
+                    <option value="">-- Pilih Serial Number --</option>
+                    @foreach($availableItems as $item)
+                        <option value="{{ $item['id'] }}">{{ $item['serial_number'] }} ({{ ucfirst($item['condition']??'good') }})</option>
+                    @endforeach
+                </select>
+                @error('item_id')
+                <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                @enderror
+            </div>
 
             <!-- Condition -->
             <div>

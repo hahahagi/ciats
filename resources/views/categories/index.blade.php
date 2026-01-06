@@ -31,10 +31,10 @@
                                 <a href="{{ route('categories.edit', $category['id']) }}" class="w-4 mr-2 transform hover:text-purple-500 hover:scale-110">
                                     <i class="fas fa-edit"></i>
                                 </a>
-                                <form action="{{ route('categories.destroy', $category['id']) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus kategori ini?');">
+                                <form action="{{ route('categories.destroy', $category['id']) }}" method="POST" class="inline-block">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="w-4 mr-2 transform hover:text-red-500 hover:scale-110">
+                                    <button type="button" onclick="confirmDeleteCategory(this)" class="w-4 mr-2 transform hover:text-red-500 hover:scale-110">
                                         <i class="fas fa-trash-alt"></i>
                                     </button>
                                 </form>
@@ -52,3 +52,22 @@
     </div>
 </div>
 @endsection
+
+<script>
+    function confirmDeleteCategory(button) {
+        Swal.fire({
+            title: 'Yakin ingin menghapus kategori ini?',
+            text: "Data yang dihapus tidak dapat dikembalikan!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Ya, Hapus!',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                button.closest('form').submit();
+            }
+        });
+    }
+</script>

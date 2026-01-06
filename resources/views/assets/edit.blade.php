@@ -21,7 +21,7 @@
             </div>
         </div>
 
-        <form action="{{ route('assets.update', $assetId) }}" method="POST" class="space-y-6">
+        <form action="{{ route('assets.update', $assetId) }}" method="POST" class="space-y-6" enctype="multipart/form-data">
             @csrf
             @method('PUT')
 
@@ -39,7 +39,26 @@
                 @enderror
             </div>
 
-            <!-- Category & Serial -->
+             <!-- Image Upload -->
+            <div>
+                <label class="block text-gray-700 font-medium mb-2">
+                    <i class="fas fa-image text-blue-600 mr-2"></i>
+                    Foto Aset
+                </label>
+                @if(!empty($asset['image']))
+                    <div class="mb-2">
+                        <img src="{{ asset($asset['image']) }}" class="h-32 rounded shadow">
+                    </div>
+                @endif
+                <input type="file" name="image" accept="image/*"
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition">
+                 <p class="text-sm text-gray-500 mt-1">Biarkan kosong jika tidak ingin mengubah foto data.</p>
+                @error('image')
+                <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <!-- Category & Location -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                     <label class="block text-gray-700 font-medium mb-2">
@@ -57,27 +76,8 @@
                         @endforeach
                         <option value="other" {{ old('category', $asset['category'] ?? '') == 'other' ? 'selected' : '' }}>Lainnya</option>
                     </select>
-                    @error('category')
-                    <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
-                    @enderror
                 </div>
 
-                <div>
-                    <label class="block text-gray-700 font-medium mb-2">
-                        <i class="fas fa-barcode text-purple-600 mr-2"></i>
-                        Serial Number <span class="text-red-500">*</span>
-                    </label>
-                    <input type="text" name="serial_number" value="{{ old('serial_number', $asset['serial_number'] ?? '') }}"
-                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 transition font-mono"
-                        required>
-                    @error('serial_number')
-                    <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
-            </div>
-
-            <!-- Location & Status -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                     <label class="block text-gray-700 font-medium mb-2">
                         <i class="fas fa-map-marker-alt text-purple-600 mr-2"></i>
@@ -91,26 +91,13 @@
                         </option>
                         @endforeach
                     </select>
-                    @error('location')
-                    <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
-                    @enderror
                 </div>
-
-                <div>
-                    <label class="block text-gray-700 font-medium mb-2">
+            </div>
                         <i class="fas fa-info-circle text-purple-600 mr-2"></i>
                         Status <span class="text-red-500">*</span>
                     </label>
                     <select name="status" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 transition" required>
-                        <option value="available" {{ old('status', $asset['status'] ?? '') == 'available' ? 'selected' : '' }}>Available</option>
-                        <option value="maintenance" {{ old('status', $asset['status'] ?? '') == 'maintenance' ? 'selected' : '' }}>Maintenance</option>
-                        <option value="damaged" {{ old('status', $asset['status'] ?? '') == 'damaged' ? 'selected' : '' }}>Damaged</option>
-                    </select>
-                    @error('status')
-                    <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
-            </div>
+
 
             <!-- Description -->
             <div>

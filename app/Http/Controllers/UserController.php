@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Log;
 use Kreait\Firebase\Factory;
+use Illuminate\Routing\Controller;
 
 /**
  * Controller UserController
@@ -47,6 +48,18 @@ class UserController extends Controller
             Log::error('Firebase UserController error: ' . $e->getMessage());
             throw $e;
         }
+
+        $this->middleware(function ($request, $next) {
+            $user = Session::get('user');
+            if (!$user) {
+                return redirect('/login');
+            }
+            // Optional: Block non-admin/super_admin from accessing user management routes entirely
+            if (!in_array($user['role'], ['admin', 'super_admin'])) {
+                abort(403, 'Unauthorized.');
+            }
+            return $next($request);
+        });
     }
 
     /**
@@ -223,6 +236,11 @@ class UserController extends Controller
                 return back()->withErrors(['role' => 'Anda tidak bisa mengubah data Super Admin.']);
             }
 
+            // Proteksi: Admin biasa tidak bisa mengubah data sesama Admin (kecuali dirinya sendiri)
+            if (($userRef['role'] ?? '') === 'admin' && ($currentUser['role'] ?? '') === 'admin' && $id !== ($currentUser['id'] ?? '')) {
+                return back()->withErrors(['role' => 'AKSES DITOLAK: Hanya Super Admin yang bisa mengubah data Admin lain.']);
+            }
+
             // Cek email duplikat
             $usersRef = $this->database->getReference('users')->getValue();
             if ($usersRef) {
@@ -279,6 +297,11 @@ class UserController extends Controller
             // Proteksi: Admin biasa tidak bisa menghapus Super Admin
             if (($userToDelete['role'] ?? '') === 'super_admin' && ($currentUser['role'] ?? '') !== 'super_admin') {
                 return redirect('/admin/users')->with('error', 'AKSES DITOLAK: Hanya sesama Super Admin yang bisa menghapus Super Admin.');
+            }
+
+            // Proteksi: Admin biasa tidak bisa menghapus sesama Admin
+            if (($userToDelete['role'] ?? '') === 'admin' && ($currentUser['role'] ?? '') === 'admin') {
+                return redirect('/admin/users')->with('error', 'AKSES DITOLAK: Hanya Super Admin yang bisa menghapus Admin.');
             }
 
             $this->database->getReference("users/{$id}")->remove();

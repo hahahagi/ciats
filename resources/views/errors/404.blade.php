@@ -14,7 +14,7 @@
     }
 
     .gradient-bg {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: #3b82f6;
     }
 
     .float-animation {
@@ -59,7 +59,7 @@
             <div class="space-y-4">
                 <div class="relative">
                     <input type="text" placeholder="Cari halaman yang Anda butuhkan..."
-                        class="w-full px-6 py-4 rounded-lg border-2 border-gray-300 focus:border-purple-500 focus:outline-none"
+                        class="w-full px-6 py-4 rounded-lg border-2 border-gray-300 focus:border-blue-500 focus:outline-none"
                         onkeypress="if(event.key==='Enter') alert('Search functionality coming soon!')">
                     <i class="fas fa-search absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
                 </div>
@@ -67,7 +67,7 @@
                 <!-- Quick Links -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <a href="/dashboard"
-                        class="px-6 py-4 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-semibold flex items-center justify-center space-x-2">
+                        class="px-6 py-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold flex items-center justify-center space-x-2">
                         <i class="fas fa-home"></i>
                         <span>Dashboard</span>
                     </a>
@@ -95,7 +95,7 @@
 
         <!-- Back Button -->
         <button onclick="window.history.back()"
-            class="mt-6 inline-flex items-center text-white hover:text-purple-200 transition">
+            class="mt-6 inline-flex items-center text-white hover:text-blue-200 transition">
             <i class="fas fa-arrow-left mr-2"></i>
             Kembali ke halaman sebelumnya
         </button>

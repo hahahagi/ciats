@@ -39,14 +39,67 @@ class TransactionController extends Controller
     {
         $user = Session::get('user');
 
-        // Ambil assets yang available saja
+        // A. Calculate User Stats & Global Pending Counts first
+        $stats = [
+            'my_active' => 0,
+            'my_pending' => 0,
+        ];
+        $pendingCounts = [];
+
+        $transactionsRef = $this->database->getReference('transactions')->getValue();
+        if ($transactionsRef) {
+            foreach ($transactionsRef as $transaction) {
+                // Stats for current user
+                if (($transaction['user_id'] ?? '') == $user['id']) {
+                    $status = $transaction['status'] ?? '';
+                    if ($status == 'active') {
+                        $stats['my_active']++;
+                    } elseif ($status == 'waiting_approval') {
+                        $stats['my_pending']++;
+                    }
+                }
+
+                // Global Pending Count (Waiting Approval) -> Reduces Stock
+                if (in_array(($transaction['status'] ?? ''), ['waiting_approval', 'approved'])) {
+                    $aId = $transaction['asset_id'] ?? null;
+                    if ($aId) {
+                        $pendingCounts[$aId] = ($pendingCounts[$aId] ?? 0) + 1;
+                    }
+                }
+            }
+        }
+
+        // B. Get Assets and Filter by Real Availability
         $assetsRef = $this->database->getReference('assets')->getValue();
         $availableAssets = [];
 
         if ($assetsRef) {
             foreach ($assetsRef as $id => $asset) {
-                if (($asset['status'] ?? '') == 'available') {
+                // 1. Calculate Physical Availability
+                $physicalCount = 0;
+                $items = $asset['items'] ?? [];
+
+                if (!empty($items)) {
+                    foreach ($items as $item) {
+                        if (($item['status'] ?? 'available') === 'available') {
+                            $physicalCount++;
+                        }
+                    }
+                } else {
+                    // Legacy/Single
+                    if (($asset['status'] ?? 'available') === 'available') {
+                        $physicalCount = 1;
+                    }
+                }
+
+                // 2. Subtract Pending Requests
+                $pendingForThisAsset = $pendingCounts[$id] ?? 0;
+                $realAvailable = $physicalCount - $pendingForThisAsset;
+
+                // 3. Add to list if available > 0
+                if ($realAvailable > 0) {
                     $asset['id'] = $id;
+                    $asset['available_count'] = $realAvailable; // Inject calculated count
                     $availableAssets[] = $asset;
                 }
             }
@@ -62,26 +115,6 @@ class TransactionController extends Controller
             $categories[$category][] = $asset;
         }
 
-        // Calculate user stats
-        $stats = [
-            'my_active' => 0,
-            'my_pending' => 0,
-        ];
-
-        $transactionsRef = $this->database->getReference('transactions')->getValue();
-        if ($transactionsRef) {
-            foreach ($transactionsRef as $transaction) {
-                if (($transaction['user_id'] ?? '') == $user['id']) {
-                    $status = $transaction['status'] ?? '';
-                    if ($status == 'active') {
-                        $stats['my_active']++;
-                    } elseif ($status == 'waiting_approval') {
-                        $stats['my_pending']++;
-                    }
-                }
-            }
-        }
-
         return view('transactions.catalog', [
             'categories' => $categories,
             'stats' => $stats,
@@ -90,6 +123,330 @@ class TransactionController extends Controller
         ]);
     }
 
+    // Bulk Approve
+    public function bulkApprove(Request $request)
+    {
+        $user = Session::get('user');
+
+        if (!in_array($user['role'], ['operator', 'admin', 'super_admin'])) {
+            abort(403, 'Unauthorized.');
+        }
+
+        $ids = $request->input('tx_ids', []);
+        if (empty($ids)) {
+            return back()->with('error', 'Tidak ada transaksi yang dipilih.');
+        }
+
+        $count = 0;
+        foreach ($ids as $id) {
+            $transaction = $this->database->getReference("transactions/{$id}")->getValue();
+            if ($transaction && ($transaction['status'] ?? '') === 'waiting_approval') {
+                $this->database->getReference("transactions/{$id}")->update([
+                    'status' => 'approved',
+                    'approved_by' => $user['id'],
+                    'approved_by_name' => $user['name'],
+                    'approved_at' => time(),
+                ]);
+
+                // Audit
+                AuditLogger::log('transaction_approved', ['transaction_id' => $id], $user['id'], $user['name']);
+                $count++;
+            }
+        }
+
+        return redirect()->route('transactions.pendingApprovals')
+            ->with('success', "{$count} Permintaan berhasil disetujui sekaligus!");
+    }
+
+    // Bulk Reject
+    public function bulkReject(Request $request)
+    {
+        $user = Session::get('user');
+
+        if (!in_array($user['role'], ['operator', 'admin', 'super_admin'])) {
+            abort(403, 'Unauthorized.');
+        }
+
+        $ids = $request->input('tx_ids', []);
+        $reason = $request->input('bulk_rejection_reason');
+
+        if (empty($ids)) {
+            return back()->with('error', 'Tidak ada transaksi yang dipilih.');
+        }
+
+        $count = 0;
+        foreach ($ids as $id) {
+            $transaction = $this->database->getReference("transactions/{$id}")->getValue();
+            if ($transaction && ($transaction['status'] ?? '') === 'waiting_approval') {
+                $this->database->getReference("transactions/{$id}")->update([
+                    'status' => 'rejected',
+                    'approved_by' => $user['id'],
+                    'approved_by_name' => $user['name'],
+                    'approved_at' => time(), // Rejection time
+                    'rejection_reason' => $reason
+                ]);
+
+                // Audit
+                AuditLogger::log('transaction_rejected', ['transaction_id' => $id], $user['id'], $user['name']);
+                $count++;
+            }
+        }
+
+        return redirect()->route('transactions.pendingApprovals')
+            ->with('success', "{$count} Permintaan berhasil ditolak sekaligus.");
+    }
+
+
+    // Bulk Checkout Form (Step 1)
+    public function bulkCheckoutForm(Request $request)
+    {
+        $user = Session::get('user');
+        if (!in_array($user['role'], ['operator', 'admin', 'super_admin'])) abort(403);
+
+        $assetId = $request->input('asset_id');
+        $serials = $request->input('item_serials', []);
+
+        if (empty($serials)) return back()->with('error', 'Tidak ada item yang dipilih.');
+
+        // 1. Get Pending Approved Transactions (FIFO)
+        $txRef = $this->database->getReference('transactions')->getValue();
+        $pendingTxs = [];
+        if ($txRef) {
+            foreach ($txRef as $key => $tx) {
+                if (($tx['asset_id'] ?? '') == $assetId && ($tx['status'] ?? '') == 'approved') {
+                    $tx['id'] = $key;
+                    $pendingTxs[] = $tx;
+                }
+            }
+        }
+        // Sort Oldest First
+        usort($pendingTxs, function ($a, $b) {
+            return ($a['approved_at'] ?? 0) <=> ($b['approved_at'] ?? 0);
+        });
+
+        if (count($pendingTxs) < count($serials)) {
+            return back()->with('error', 'Jumlah item dipilih (' . count($serials) . ') melebihi jumlah permintaan approved (' . count($pendingTxs) . ').');
+        }
+
+        // Map items
+        $checkoutItems = [];
+        foreach ($serials as $index => $serial) {
+            if (isset($pendingTxs[$index])) {
+                $tx = $pendingTxs[$index];
+                $checkoutItems[] = [
+                    'serial' => $serial,
+                    'tx_id' => $tx['id'],
+                    'user_name' => $tx['user_name'],
+                    'purpose' => $tx['purpose'] ?? '-'
+                ];
+            }
+        }
+
+        return view('transactions.bulk-checkout-form', [
+            'checkoutItems' => $checkoutItems,
+            'assetId' => $assetId,
+            'user' => $user,
+            'title' => 'Bulk Checkout'
+        ]);
+    }
+
+    // Process Bulk Checkout (Step 2)
+    public function processBulkCheckout(Request $request)
+    {
+        $user = Session::get('user');
+        if (!in_array($user['role'], ['operator', 'admin', 'super_admin'])) abort(403);
+
+        $assetId = $request->asset_id;
+        $items = $request->items; // Array of [serial, tx_id, condition, notes]
+
+        // Map Asset Items to get Item ID from Serial
+        $assetRef = $this->database->getReference("assets/{$assetId}")->getValue();
+        $serialToItemId = [];
+        if (isset($assetRef['items'])) {
+            foreach ($assetRef['items'] as $itemId => $itemData) {
+                if (isset($itemData['serial_number'])) {
+                    $serialToItemId[$itemData['serial_number']] = $itemId;
+                }
+            }
+        }
+
+        $processed = 0;
+        foreach ($items as $item) {
+            $txId = $item['tx_id'] ?? null;
+            $serial = $item['serial'] ?? null;
+            $condition = $item['condition'] ?? 'good';
+            $notes = $item['notes'] ?? null;
+            $itemId = $serialToItemId[$serial] ?? null;
+
+            if ($itemId && $txId) {
+                // Update Transaction
+                $this->database->getReference("transactions/{$txId}")->update([
+                    'status' => 'active',
+                    'checked_out_by' => $user['id'],
+                    'checked_out_by_name' => $user['name'],
+                    'checkout_at' => time(),
+                    'item_id' => $itemId,
+                    'asset_serial' => $serial,
+                    'condition_before' => $condition,
+                    'checkout_notes' => $notes,
+                ]);
+
+                // Update Item
+                $this->database->getReference("assets/{$assetId}/items/{$itemId}")->update([
+                    'status' => 'in_use',
+                    'current_holder' => $item['holder'] ?? 'Employee',
+                    'updated_at' => time(),
+                ]);
+            }
+            $processed++;
+        }
+
+        return redirect()->route('assets.show', $assetId)
+            ->with('success', "{$processed} item berhasil diproses (Checkout).");
+    }
+
+    // Bulk Checkin Form
+    public function bulkCheckinForm(Request $request)
+    {
+        $user = Session::get('user');
+        if (!in_array($user['role'], ['operator', 'admin', 'super_admin'])) abort(403);
+
+        $assetId = $request->input('asset_id');
+        $serials = $request->input('item_serials', []);
+
+        if (empty($serials)) return back()->with('error', 'Tidak ada item yang dipilih.');
+
+        // Find Active Transactions for these serials
+        $txRef = $this->database->getReference('transactions')->getValue();
+        $checkinItems = [];
+
+        // Build map: Serial -> Active TX
+        $activeTxMap = [];
+        if ($txRef) {
+            foreach ($txRef as $txId => $tx) {
+                // Modified to allow mixed assets if assetId is not provided
+                $isAssetMatch = $assetId ? ($tx['asset_id'] ?? '') == $assetId : true;
+
+                if (
+                    $isAssetMatch &&
+                    ($tx['status'] ?? '') == 'active' &&
+                    !empty($tx['asset_serial'])
+                ) {
+                    $activeTxMap[$tx['asset_serial']] = $tx;
+                    $activeTxMap[$tx['asset_serial']]['id'] = $txId;
+                }
+            }
+        }
+
+        foreach ($serials as $serial) {
+            if (isset($activeTxMap[$serial])) {
+                $tx = $activeTxMap[$serial];
+                $checkinItems[] = [
+                    'serial' => $serial,
+                    'tx_id' => $tx['id'],
+                    'holder' => $tx['user_name'],
+                    'asset_id' => $tx['asset_id'] // Add asset_id for per-item processing
+                ];
+            }
+        }
+
+        return view('transactions.bulk-checkin-form', [
+            'checkinItems' => $checkinItems,
+            'assetId' => $assetId,
+            'locations' => $this->database->getReference('locations')->getValue() ?? [],
+            'user' => $user,
+            'title' => 'Bulk Checkin'
+        ]);
+    }
+
+    // Process Bulk Checkin
+    public function processBulkCheckin(Request $request)
+    {
+        $user = Session::get('user');
+        $globalAssetId = $request->asset_id;
+        $items = $request->items;
+
+        $processed = 0;
+        $loadedAssets = []; // Cache to prevent fetching same asset multiple times
+
+        foreach ($items as $item) {
+            $txId = $item['tx_id'];
+            $serial = $item['serial'];
+
+            // Determine Asset ID for this item (Per-item or Global fallback)
+            $currentAssetId = $item['asset_id'] ?? $globalAssetId;
+
+            if (!$currentAssetId) continue; // Skip if no asset ID found
+
+            // Load Asset Map if not loaded (Optimization)
+            if (!isset($loadedAssets[$currentAssetId])) {
+                $ref = $this->database->getReference("assets/{$currentAssetId}")->getValue();
+                $map = [];
+                if (isset($ref['items'])) {
+                    foreach ($ref['items'] as $id => $data) {
+                        if (isset($data['serial_number'])) $map[$data['serial_number']] = $id;
+                    }
+                }
+                $loadedAssets[$currentAssetId] = ['ref' => $ref, 'map' => $map];
+            }
+
+            $assetData = $loadedAssets[$currentAssetId];
+            $itemId = $assetData['map'][$serial] ?? null;
+            $assetRef = $assetData['ref']; // Used for location fallback
+
+            // Extract per-item inputs
+            $condition = $item['condition'] ?? 'good';
+            $notes = $item['notes'] ?? null;
+
+            // Get original asset location if possible
+            $returnedLocation = $assetRef['location'] ?? 'Storage';
+
+            // Update Transaction
+            $this->database->getReference("transactions/{$txId}")->update([
+                'status' => 'completed',
+                'checked_in_by' => $user['id'],
+                'checkin_at' => time(),
+                'actual_return_date' => time(),
+                'condition_after' => $condition,
+                'checkin_notes' => $notes,
+                'returned_location' => $returnedLocation
+            ]);
+
+            // Update Item
+            if ($itemId) {
+                // Determine status based on condition
+                $newStatus = ($condition == 'damaged') ? 'damaged' : 'available';
+
+                $this->database->getReference("assets/{$currentAssetId}/items/{$itemId}")->update([
+                    'status' => $newStatus,
+                    'condition' => $condition,
+                    'current_holder' => null,
+                    'updated_at' => time(),
+                ]);
+            }
+            $processed++;
+        }
+
+        // Redirect logic
+        if ($globalAssetId) {
+            return redirect()->route('assets.show', $globalAssetId)
+                ->with('success', "{$processed} item berhasil dikembalikan (Check-in).");
+        } else {
+            return redirect()->route('transactions.activeLoans')
+                ->with('success', "{$processed} item berhasil dikembalikan (Check-in).");
+        }
+    }
+
+    // Bulk Checkout (Legacy Direct - Removed/Replaced)
+    public function bulkCheckout(Request $request)
+    {
+        // This method is now likely unused if we routed form to bulkCheckoutForm
+        // But for safety, let's keep it or redirect.
+        // The View form POSTs to here? No, I updated JS to post to bulkCheckoutForm.
+        return redirect()->back();
+    }
+
+
     // 2. Form pengajuan peminjaman
     public function requestForm($assetId)
     {
@@ -97,9 +454,39 @@ class TransactionController extends Controller
 
         $asset = $this->database->getReference("assets/{$assetId}")->getValue();
 
-        if (!$asset || ($asset['status'] ?? '') != 'available') {
+        // 1. Calculate Physical Availability
+        $physicalCount = 0;
+        $items = $asset['items'] ?? [];
+        if (!empty($items)) {
+            foreach ($items as $item) {
+                if (($item['status'] ?? 'available') === 'available') {
+                    $physicalCount++;
+                }
+            }
+        } else {
+            // Legacy/Single check
+            if (($asset['status'] ?? 'available') === 'available') {
+                $physicalCount = 1;
+            }
+        }
+
+        // 2. Count Pending Requests (Waiting Approval)
+        $pendingCount = 0;
+        $transactionsRef = $this->database->getReference('transactions')->getValue();
+        if ($transactionsRef) {
+            foreach ($transactionsRef as $t) {
+                if (($t['asset_id'] ?? '') == $assetId && in_array(($t['status'] ?? ''), ['waiting_approval', 'approved'])) {
+                    $pendingCount++;
+                }
+            }
+        }
+
+        // 3. Real Availability
+        $realAvailable = $physicalCount - $pendingCount;
+
+        if (!$asset || $realAvailable <= 0) {
             return redirect()->route('transactions.catalog')
-                ->with('error', 'Aset tidak tersedia untuk dipinjam.');
+                ->with('error', 'Aset tidak tersedia untuk dipinjam (Stok habis/sedang diproses).');
         }
 
         // Ambil lokasi yang tersedia
@@ -108,6 +495,7 @@ class TransactionController extends Controller
         return view('transactions.request-form', [
             'asset' => $asset,
             'assetId' => $assetId,
+            'availableCount' => $realAvailable, // Pass Real Available
             'locations' => $locations,
             'user' => $user,
             'title' => 'Ajukan Peminjaman'
@@ -121,10 +509,13 @@ class TransactionController extends Controller
 
         $request->validate([
             'asset_id' => 'required',
+            'quantity' => 'required|integer|min:1',
             'purpose' => 'required|string|min:10|max:500',
             'requested_location' => 'required|string',
             'expected_return_date' => 'required|date|after:today',
         ], [
+            'quantity.required' => 'Jumlah aset wajib diisi.',
+            'quantity.min' => 'Jumlah aset minimal 1.',
             'purpose.required' => 'Tujuan peminjaman wajib diisi.',
             'purpose.min' => 'Tujuan peminjaman minimal 10 karakter.',
             'purpose.max' => 'Tujuan peminjaman maksimal 500 karakter.',
@@ -135,59 +526,94 @@ class TransactionController extends Controller
         ]);
 
         $assetId = $request->asset_id;
+        $quantity = (int)$request->quantity;
         $asset = $this->database->getReference("assets/{$assetId}")->getValue();
 
-        if (!$asset || ($asset['status'] ?? '') != 'available') {
-            return back()->with('error', 'Aset sudah tidak tersedia.');
+        // 1. Calculate Physical Availability
+        $items = $asset['items'] ?? [];
+        $physicalCount = 0;
+
+        if (!empty($items)) {
+            foreach ($items as $item) {
+                if (($item['status'] ?? 'available') === 'available') {
+                    $physicalCount++;
+                }
+            }
+        } else {
+            // Fallback legacy singular check
+            if (($asset['status'] ?? 'available') === 'available') {
+                $physicalCount = 1;
+            }
         }
 
-        // Buat transaction baru
-        $transactionData = [
-            'asset_id' => $assetId,
-            'asset_name' => $asset['name'] ?? '',
-            'asset_serial' => $asset['serial_number'] ?? '',
-            'user_id' => $user['id'],
-            'user_name' => $user['name'],
-            'user_email' => $user['email'],
-            'requested_by' => $user['name'],
-            'approved_by' => null,
-            'approved_by_name' => null,
-            'checked_out_by' => null,
-            'checked_in_by' => null,
-            'status' => 'waiting_approval',
-            'purpose' => $request->purpose,
-            'requested_location' => $request->requested_location,
-            'requested_at' => time(),
-            'approved_at' => null,
-            'checkout_at' => null,
-            'checkin_at' => null,
-            'expected_return_date' => strtotime($request->expected_return_date),
-            'actual_return_date' => null,
-            'condition_before' => 'good',
-            'condition_after' => null,
-            'damage_notes' => null,
-        ];
+        // 2. Count Pending Requests (Waiting Approval)
+        $pendingCount = 0;
+        $transactionsRef = $this->database->getReference('transactions')->getValue();
+        if ($transactionsRef) {
+            foreach ($transactionsRef as $t) {
+                if (($t['asset_id'] ?? '') == $assetId && in_array(($t['status'] ?? ''), ['waiting_approval', 'approved'])) {
+                    $pendingCount++;
+                }
+            }
+        }
 
-        // Simpan transaction
-        $transactionRef = $this->database->getReference('transactions')->push($transactionData);
-        $transactionId = $transactionRef->getKey();
+        // 3. Real Availability
+        $realAvailable = $physicalCount - $pendingCount;
 
-        // Update status asset menjadi "booked"
-        $this->database->getReference("assets/{$assetId}")->update([
-            'status' => 'booked',
-            'booked' => true,
-            'updated_at' => time(),
-        ]);
+        if (!$asset || $realAvailable < $quantity) {
+            return back()->with('error', "Stok tidak mencukupi. Tersedia: {$realAvailable}, Diminta: {$quantity}.");
+        }
 
-        // Audit Log
-        AuditLogger::log('transaction_requested', [
-            'transaction_id' => $transactionId,
-            'asset_id' => $assetId,
-            'asset_name' => $asset['name'] ?? ''
-        ], $user['id'], $user['name']);
+        // Loop create transaction for each quantity requested
+        for ($i = 0; $i < $quantity; $i++) {
+            // Buat transaction baru
+            $transactionData = [
+                'asset_id' => $assetId,
+                'asset_name' => $asset['name'] ?? '',
+                'asset_serial' => 'Assigned at Checkout', // Will be set by operator
+                'user_id' => $user['id'],
+                'user_name' => $user['name'],
+                'user_email' => $user['email'],
+                'requested_by' => $user['name'],
+                'approved_by' => null,
+                'approved_by_name' => null,
+                'checked_out_by' => null,
+                'checked_in_by' => null,
+                'status' => 'waiting_approval',
+                'purpose' => $request->purpose,
+                'requested_location' => $request->requested_location,
+                'requested_at' => time(),
+                'approved_at' => null,
+                'checkout_at' => null,
+                'checkin_at' => null,
+                'expected_return_date' => strtotime($request->expected_return_date),
+                'actual_return_date' => null,
+                'condition_before' => 'good',
+                'condition_after' => null,
+                'damage_notes' => null,
+                'request_group_id' => $quantity > 1 ? uniqid('grp_') : null, // Optional grouping
+            ];
+
+            // Simpan transaction
+            $transactionRef = $this->database->getReference('transactions')->push($transactionData);
+            $transactionId = $transactionRef->getKey();
+
+            // Audit Log (Bulk info?)
+            AuditLogger::log('transaction_requested', [
+                'transaction_id' => $transactionId,
+                'asset_id' => $assetId,
+                'asset_name' => $asset['name'] ?? '',
+                'quantity_index' => $i + 1
+            ], $user['id'], $user['name']);
+        }
+
+        // Redirect message
+        $msg = $quantity > 1
+            ? "Berhasil mengajukan {$quantity} item! Menunggu persetujuan operator."
+            : 'Pengajuan berhasil! Menunggu persetujuan operator.';
 
         return redirect()->route('transactions.myRequests')
-            ->with('success', 'Pengajuan berhasil! Menunggu persetujuan operator.');
+            ->with('success', $msg);
     }
 
     // 4. Lihat request sendiri (karyawan)
@@ -375,10 +801,21 @@ class TransactionController extends Controller
 
         $asset = $this->database->getReference("assets/{$transaction['asset_id']}")->getValue();
 
+        // Get Available Items
+        $items = $asset['items'] ?? [];
+        $availableItems = [];
+        foreach ($items as $itemId => $item) {
+            if (($item['status'] ?? 'available') === 'available') {
+                $item['id'] = $itemId;
+                $availableItems[] = $item;
+            }
+        }
+
         return view('transactions.checkout-form', [
             'transaction' => $transaction,
             'transactionId' => $transactionId,
             'asset' => $asset,
+            'availableItems' => $availableItems,
             'user' => $user,
             'title' => 'Checkout Barang'
         ]);
@@ -395,6 +832,7 @@ class TransactionController extends Controller
 
         $request->validate([
             'condition' => 'required|in:good,minor_damage',
+            'item_id' => 'required|string',
             'notes' => 'nullable|string|max:500',
         ]);
 
@@ -402,6 +840,14 @@ class TransactionController extends Controller
 
         if (!$transaction || ($transaction['status'] ?? '') != 'approved') {
             return back()->with('error', 'Transaksi tidak valid.');
+        }
+
+        $assetId = $transaction['asset_id'];
+        $itemId = $request->item_id;
+        $item = $this->database->getReference("assets/{$assetId}/items/{$itemId}")->getValue();
+
+        if (!$item) {
+            return back()->with('error', 'Item tidak valid atau tidak ditemukan.');
         }
 
         // Update transaction
@@ -412,16 +858,14 @@ class TransactionController extends Controller
             'checkout_at' => time(),
             'condition_before' => $request->condition,
             'checkout_notes' => $request->notes,
+            'item_id' => $itemId,
+            'asset_serial' => $item['serial_number']
         ]);
 
-        // Update asset status
-        $assetId = $transaction['asset_id'];
-        $this->database->getReference("assets/{$assetId}")->update([
+        // Update Item status
+        $this->database->getReference("assets/{$assetId}/items/{$itemId}")->update([
             'status' => 'in_use',
-            'booked' => false,
             'current_holder' => $transaction['user_name'],
-            'current_holder_id' => $transaction['user_id'],
-            'current_transaction_id' => $transactionId,
             'updated_at' => time(),
         ]);
 
@@ -494,17 +938,26 @@ class TransactionController extends Controller
             'damage_notes' => $request->notes,
         ]);
 
-        // Update asset status
+        // Update asset item status
         $assetId = $transaction['asset_id'];
-        $updateData = [
-            'status' => $request->condition == 'good' ? 'available' : 'damaged',
-            'current_holder' => null,
-            'current_holder_id' => null,
-            'current_transaction_id' => null,
-            'updated_at' => time(),
-        ];
+        $itemId = $transaction['item_id'] ?? null;
 
-        $this->database->getReference("assets/{$assetId}")->update($updateData);
+        if ($itemId) {
+            $updateData = [
+                'status' => $request->condition == 'good' ? 'available' : 'damaged',
+                'condition' => $request->condition, // Update condition in item
+                'current_holder' => null,
+                'updated_at' => time(),
+            ];
+            $this->database->getReference("assets/{$assetId}/items/{$itemId}")->update($updateData);
+        } else {
+            // Legacy fallback: Unlock parent asset if no item_id was recorded
+            $this->database->getReference("assets/{$assetId}")->update([
+                'status' => 'available',
+                'booked' => false,
+                'updated_at' => time(),
+            ]);
+        }
 
         // Audit Log
         AuditLogger::log('transaction_checkin', [
@@ -712,10 +1165,24 @@ class TransactionController extends Controller
                         $allAssets = $this->database->getReference('assets')->getValue();
                         if ($allAssets) {
                             foreach ($allAssets as $key => $val) {
+                                // Check Parent Serial (Legacy)
                                 if (isset($val['serial_number']) && (string)$val['serial_number'] === (string)$serialNumber) {
                                     $asset = $val;
                                     $assetId = $key;
                                     break;
+                                }
+                                // Check Items Serial (New)
+                                if (isset($val['items']) && is_array($val['items'])) {
+                                    foreach ($val['items'] as $itemKey => $item) {
+                                        if (isset($item['serial_number']) && (string)$item['serial_number'] === (string)$serialNumber) {
+                                            $asset = $val;
+                                            $assetId = $key;
+                                            // We could pass itemId to view, but assets.show handles listing items.
+                                            // Maybe highlight the scanned item?
+                                            // For now, just showing the asset detail is sufficient.
+                                            break 2;
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -723,9 +1190,32 @@ class TransactionController extends Controller
                 }
 
                 if ($asset && $assetId) {
+                    // Normalize return data
+                    $displaySerial = $asset['serial_number'] ?? '-';
+                    $displayStatus = $asset['status'] ?? 'Unknown';
+
+                    // If we found it via strict serial match on the logic above, let's try to be specific
+                    // logic above: "If found via item..." -> but we broke the loop.
+                    // Let's refine the loop to capture the specific item details.
+
+                    // RE-RUN SEARCH for Specific Item to get exact status/serial for display
+                    if (isset($asset['items'])) {
+                        foreach ($asset['items'] as $item) {
+                            if (($item['serial_number'] ?? '') === $serialNumber) {
+                                $displaySerial = $item['serial_number'];
+                                $displayStatus = $item['status'] ?? 'available';
+                                break;
+                            }
+                        }
+                    }
+
                     return response()->json([
                         'type' => 'asset',
-                        'asset' => $asset,
+                        'asset' => [
+                            'name' => $asset['name'] ?? 'Unknown Asset',
+                            'serial_number' => $displaySerial,
+                            'status' => $displayStatus
+                        ],
                         'assetId' => $assetId,
                         'redirect_url' => route('assets.show', $assetId)
                     ]);

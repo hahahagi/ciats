@@ -22,7 +22,7 @@
             </div>
         </div>
 
-        <form action="{{ route('assets.store') }}" method="POST" class="space-y-6">
+        <form action="{{ route('assets.store') }}" method="POST" class="space-y-6" enctype="multipart/form-data">
             @csrf
 
             <!-- Name -->
@@ -39,7 +39,21 @@
                 @enderror
             </div>
 
-            <!-- Category & Serial Number -->
+            <!-- Image Upload -->
+            <div>
+                <label class="block text-gray-700 font-medium mb-2">
+                    <i class="fas fa-image text-blue-600 mr-2"></i>
+                    Foto Aset
+                </label>
+                <input type="file" name="image" accept="image/*"
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition">
+                <p class="text-sm text-gray-500 mt-1">Upload foto asli aset (JPG/PNG).</p>
+                @error('image')
+                <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <!-- Category & Quantity -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- Category -->
                 <div>
@@ -58,21 +72,19 @@
                         @endforeach
                         <option value="other" {{ old('category') == 'other' ? 'selected' : '' }}>Lainnya</option>
                     </select>
-                    @error('category')
-                    <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
-                    @enderror
                 </div>
 
-                <!-- Serial Number -->
+                <!-- Quantity (Stock) -->
                 <div>
                     <label class="block text-gray-700 font-medium mb-2">
-                        <i class="fas fa-barcode text-blue-600 mr-2"></i>
-                        Serial Number <span class="text-red-500">*</span>
+                        <i class="fas fa-cubes text-blue-600 mr-2"></i>
+                        Jumlah Stok (Quantity) <span class="text-red-500">*</span>
                     </label>
-                    <input type="text" name="serial_number" value="{{ old('serial_number') }}"
-                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition font-mono"
-                        placeholder="SN123456789" required>
-                    @error('serial_number')
+                    <input type="number" name="quantity" value="{{ old('quantity', 1) }}" min="1" max="100"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition"
+                        placeholder="Jumlah barang..." required>
+                    <p class="text-xs text-gray-500 mt-1">Sistem akan generate Serial Number unik untuk setiap unit.</p>
+                    @error('quantity')
                     <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                     @enderror
                 </div>

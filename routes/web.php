@@ -23,7 +23,15 @@ Route::get('/', function () {
     return redirect('/login');
 });
 
-Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+Route::get('/login', function () {
+    return redirect()->route('login.employee');
+});
+
+Route::get('/login/employee', [AuthController::class, 'showLoginEmployee'])->name('login.employee');
+Route::get('/login/admin', [AuthController::class, 'showLoginAdmin'])->name('login.admin');
+Route::get('/login/operator', [AuthController::class, 'showLoginOperator'])->name('login.operator');
+Route::get('/login/super_admin', [AuthController::class, 'showLoginSuperAdmin'])->name('login.super_admin');
+
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
@@ -45,6 +53,10 @@ Route::prefix('assets')->group(function () {
     Route::put('/{id}', [AssetController::class, 'update'])->name('assets.update'); // Operator only
     Route::delete('/{id}', [AssetController::class, 'destroy'])->name('assets.destroy'); // Operator only
     Route::get('/{id}/print', [AssetController::class, 'printQR'])->name('assets.printQR');
+
+    // Item Routes
+    Route::get('/{id}/items/{itemId}/edit', [AssetController::class, 'editItem'])->name('assets.editItem');
+    Route::put('/{id}/items/{itemId}', [AssetController::class, 'updateItem'])->name('assets.updateItem');
 });
 
 // =======================
@@ -83,8 +95,19 @@ Route::prefix('transactions')->group(function () {
 
     // Operator & Admin
     Route::get('/pending', [TransactionController::class, 'pendingApprovals'])->name('transactions.pendingApprovals');
+    Route::post('/bulk-approve', [TransactionController::class, 'bulkApprove'])->name('transactions.bulkApprove'); // Batch Approve
+    Route::post('/bulk-reject', [TransactionController::class, 'bulkReject'])->name('transactions.bulkReject'); // Batch Reject
     Route::post('/{id}/approve', [TransactionController::class, 'approve'])->name('transactions.approve');
+
     Route::post('/{id}/reject', [TransactionController::class, 'reject'])->name('transactions.reject');
+
+    Route::post('/bulk-checkout', [TransactionController::class, 'bulkCheckout'])->name('transactions.bulkCheckout'); // Old redirect
+    Route::post('/bulk-checkout-form', [TransactionController::class, 'bulkCheckoutForm'])->name('transactions.bulkCheckoutForm'); // View Form
+    Route::post('/process-bulk-checkout', [TransactionController::class, 'processBulkCheckout'])->name('transactions.processBulkCheckout'); // Process
+
+    Route::post('/bulk-checkin-form', [TransactionController::class, 'bulkCheckinForm'])->name('transactions.bulkCheckinForm'); // View Form
+    Route::post('/process-bulk-checkin', [TransactionController::class, 'processBulkCheckin'])->name('transactions.processBulkCheckin'); // Process
+
 
     Route::get('/{id}/checkout', [TransactionController::class, 'checkoutForm'])->name('transactions.checkoutForm');
     Route::post('/{id}/checkout', [TransactionController::class, 'processCheckout'])->name('transactions.processCheckout');

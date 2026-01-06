@@ -100,17 +100,16 @@
                         </td>
                         <td class="px-6 py-4 text-sm text-gray-600">{{ $usr['created_at'] }}</td>
                         <td class="px-6 py-4">
-                            <div class="flex items-center justify-center space-x-2">
+                            <div class="flex items-center justify-center gap-3">
                                 <a href="{{ route('admin.users.edit', $usr['id']) }}"
-                                    class="px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition">
+                                    class="inline-flex items-center justify-center px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition">
                                     <i class="fas fa-edit"></i>
                                 </a>
-                                <form action="{{ route('admin.users.destroy', $usr['id']) }}" method="POST"
-                                    onsubmit="return confirm('Yakin hapus user ini?');">
+                                <form action="{{ route('admin.users.destroy', $usr['id']) }}" method="POST" class="contents">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit"
-                                        class="px-3 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition">
+                                    <button type="button" onclick="confirmDeleteUser(this)"
+                                        class="inline-flex items-center justify-center px-3 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition">
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </form>
@@ -208,3 +207,22 @@
     </div>
 </div>
 @endsection
+
+<script>
+    function confirmDeleteUser(button) {
+        Swal.fire({
+            title: 'Yakin hapus user ini?',
+            text: "Data yang dihapus tidak dapat dikembalikan!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Ya, Hapus!',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                button.closest('form').submit();
+            }
+        });
+    }
+</script>

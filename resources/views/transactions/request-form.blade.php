@@ -29,6 +29,21 @@
                     @csrf
                     <input type="hidden" name="asset_id" value="{{ $assetId }}">
 
+                    <!-- Quantity -->
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-2">
+                            <i class="fas fa-layer-group text-purple-600 mr-2"></i>
+                            Jumlah Aset <span class="text-red-500">*</span>
+                        </label>
+                        <input type="number" name="quantity" min="1" max="{{ $availableCount }}" value="1"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 transition"
+                            required>
+                        <p class="text-sm text-gray-500 mt-1">Stok tersedia: {{ $availableCount }} unit</p>
+                        @error('quantity')
+                        <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                        @enderror
+                    </div>
+
                     <!-- Purpose -->
                     <div>
                         <label class="block text-gray-700 font-medium mb-2">
@@ -139,12 +154,31 @@
                 </div>
 
                 <div class="p-6">
-                    <!-- Icon -->
+                    <!-- Image/Icon -->
                     <div class="flex items-center justify-center mb-4">
-                        <div
-                            class="w-20 h-20 bg-gradient-to-br from-purple-100 to-purple-200 rounded-2xl flex items-center justify-center">
-                            <i class="fas fa-laptop text-purple-600 text-3xl"></i>
-                        </div>
+                        @if(!empty($asset['image']))
+                            <div class="w-full h-48 rounded-xl overflow-hidden shadow-md">
+                                <img src="{{ asset($asset['image']) }}"
+                                     alt="{{ $asset['name'] }}"
+                                     class="w-full h-full object-cover">
+                            </div>
+                        @else
+                            <div class="w-20 h-20 bg-gradient-to-br from-purple-100 to-purple-200 rounded-2xl flex items-center justify-center">
+                                @php
+                                $icons = [
+                                    'laptop' => 'fa-laptop',
+                                    'monitor' => 'fa-desktop',
+                                    'keyboard' => 'fa-keyboard',
+                                    'mouse' => 'fa-mouse',
+                                    'printer' => 'fa-print',
+                                    'scanner' => 'fa-scanner',
+                                    'projector' => 'fa-video'
+                                ];
+                                $icon = $icons[strtolower($asset['category'] ?? 'other')] ?? 'fa-box';
+                                @endphp
+                                <i class="fas {{ $icon }} text-purple-600 text-3xl"></i>
+                            </div>
+                        @endif
                     </div>
 
                     <!-- Asset Info -->
@@ -158,10 +192,7 @@
                             <span class="text-gray-700 capitalize">{{ $asset['category'] ?? '-' }}</span>
                         </div>
 
-                        <div class="flex items-center text-sm">
-                            <i class="fas fa-barcode text-purple-500 mr-3 w-5"></i>
-                            <span class="text-gray-700 font-mono">{{ $asset['serial_number'] ?? '-' }}</span>
-                        </div>
+                        <!-- Removed Serial Number Display for General Request -->
 
                         <div class="flex items-center text-sm">
                             <i class="fas fa-map-marker-alt text-purple-500 mr-3 w-5"></i>

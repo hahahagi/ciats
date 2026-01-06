@@ -55,7 +55,7 @@ class CategoryController extends Controller
     public function create()
     {
         $user = Session::get('user');
-        if (!in_array($user['role'], ['operator', 'admin'])) {
+        if (!in_array($user['role'], ['operator', 'admin', 'super_admin'])) {
             abort(403, 'Unauthorized');
         }
 
@@ -68,7 +68,7 @@ class CategoryController extends Controller
     public function store(Request $request)
     {
         $user = Session::get('user');
-        if (!in_array($user['role'], ['operator', 'admin'])) {
+        if (!in_array($user['role'], ['operator', 'admin', 'super_admin'])) {
             abort(403, 'Unauthorized');
         }
 
@@ -93,7 +93,7 @@ class CategoryController extends Controller
     public function edit($id)
     {
         $user = Session::get('user');
-        if (!in_array($user['role'], ['operator', 'admin'])) {
+        if (!in_array($user['role'], ['operator', 'admin', 'super_admin'])) {
             abort(403, 'Unauthorized');
         }
 
@@ -114,7 +114,7 @@ class CategoryController extends Controller
     public function update(Request $request, $id)
     {
         $user = Session::get('user');
-        if (!in_array($user['role'], ['operator', 'admin'])) {
+        if (!in_array($user['role'], ['operator', 'admin', 'super_admin'])) {
             abort(403, 'Unauthorized');
         }
 
@@ -138,7 +138,7 @@ class CategoryController extends Controller
     public function destroy($id)
     {
         $user = Session::get('user');
-        if (!in_array($user['role'], ['operator', 'admin'])) {
+        if (!in_array($user['role'], ['operator', 'admin', 'super_admin'])) {
             abort(403, 'Unauthorized');
         }
 

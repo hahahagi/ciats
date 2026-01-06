@@ -37,20 +37,56 @@ class AuthController extends Controller
     }
 
     /**
-     * Menampilkan form login
-     * Alur: Cek session, jika sudah login redirect dashboard, jika tidak tampilkan view login.
+     * Menampilkan form login employee
      */
     public function showLogin()
+    {
+        return redirect()->route('login.employee');
+    }
+
+    public function showLoginEmployee()
     {
         if (Session::has('user')) {
             return redirect('/dashboard');
         }
-        return view('auth.login');
+        return view('auth.login_employee');
+    }
+
+    /**
+     * Menampilkan form login admin
+     */
+    public function showLoginAdmin()
+    {
+        if (Session::has('user')) {
+            return redirect('/dashboard');
+        }
+        return view('auth.login_admin');
+    }
+
+    /**
+     * Menampilkan form login operator
+     */
+    public function showLoginOperator()
+    {
+        if (Session::has('user')) {
+            return redirect('/dashboard');
+        }
+        return view('auth.login_operator');
+    }
+
+    /**
+     * Menampilkan form login super admin
+     */
+    public function showLoginSuperAdmin()
+    {
+        if (Session::has('user')) {
+            return redirect('/dashboard');
+        }
+        return view('auth.login_super_admin');
     }
 
     /**
      * Proses login
-     * Alur: Validasi input, ambil users dari Firebase, loop cek email dan password, set session jika cocok, redirect dashboard.
      */
     public function login(Request $request)
     {
@@ -59,15 +95,48 @@ class AuthController extends Controller
             'password' => 'required|min:6',
         ]);
 
+        $loginType = $request->input('login_type', 'employee');
+
         try {
             // Ambil semua user dari Firebase
             $usersRef = $this->database->getReference('users')->getValue();
 
             if ($usersRef) {
                 foreach ($usersRef as $userId => $userData) {
-                    // Cek email dan password
                     if ($userData['email'] === $request->email) {
                         if (Hash::check($request->password, $userData['password'])) {
+
+                            // Role Check Strict
+                            $role = $userData['role'];
+
+                            // 1. Employee Login
+                            if ($loginType === 'employee') {
+                                if ($role !== 'employee') {
+                                    return back()->withErrors(['email' => 'Halaman ini khusus untuk Employee.']);
+                                }
+                            }
+
+                            // 2. Admin Login
+                            elseif ($loginType === 'admin') {
+                                if ($role !== 'admin') {
+                                    return back()->withErrors(['email' => 'Halaman ini khusus untuk Admin.']);
+                                }
+                            }
+
+                            // 3. Operator Login
+                            elseif ($loginType === 'operator') {
+                                if ($role !== 'operator') {
+                                    return back()->withErrors(['email' => 'Halaman ini khusus untuk Operator.']);
+                                }
+                            }
+
+                            // 4. Super Admin Login
+                            elseif ($loginType === 'super_admin') {
+                                if ($role !== 'super_admin') {
+                                    return back()->withErrors(['email' => 'Halaman ini khusus untuk Super Admin.']);
+                                }
+                            }
+
                             // Login berhasil
                             Session::put('user', [
                                 'id' => $userId,
@@ -128,13 +197,27 @@ class AuthController extends Controller
         ];
 
         try {
-            // 1. Total Assets & Available: Loop assets, hitung total dan available
+            // 1. Total Assets & Available: Loop assets, hitung total dan available items
+            $stats['total_assets'] = 0; // Reset
+            $stats['available_assets'] = 0; // Reset
+
             $assetsRef = $this->database->getReference('assets')->getValue();
             if ($assetsRef) {
                 foreach ($assetsRef as $asset) {
-                    $stats['total_assets']++;
-                    if (($asset['status'] ?? '') === 'available') {
-                        $stats['available_assets']++;
+                    $items = $asset['items'] ?? [];
+                    if (!empty($items)) {
+                        foreach ($items as $item) {
+                            $stats['total_assets']++;
+                            if (($item['status'] ?? 'available') === 'available') {
+                                $stats['available_assets']++;
+                            }
+                        }
+                    } else {
+                        // Legacy Fallback
+                        $stats['total_assets']++;
+                        if (($asset['status'] ?? 'available') === 'available') {
+                            $stats['available_assets']++;
+                        }
                     }
                 }
             }

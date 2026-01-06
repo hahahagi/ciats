@@ -81,22 +81,32 @@
                 data-name="{{ strtolower($asset['name'] ?? '') }}" data-category="{{ strtolower($categoryName) }}">
 
                 <!-- Image/Icon -->
-                <div class="bg-gradient-to-br from-purple-50 to-purple-100 p-8 flex items-center justify-center">
-                    <div class="w-24 h-24 bg-white rounded-2xl shadow-lg flex items-center justify-center">
-                        @php
-                        $icons = [
-                        'laptop' => 'fa-laptop',
-                        'monitor' => 'fa-desktop',
-                        'keyboard' => 'fa-keyboard',
-                        'mouse' => 'fa-mouse',
-                        'printer' => 'fa-print',
-                        'scanner' => 'fa-scanner',
-                        'projector' => 'fa-video'
-                        ];
-                        $icon = $icons[strtolower($asset['category'] ?? 'other')] ?? 'fa-box';
-                        @endphp
-                        <i class="fas {{ $icon }} text-purple-600 text-4xl"></i>
-                    </div>
+                <div class="bg-white h-48 flex items-center justify-center overflow-hidden relative group p-4 border-b border-gray-100">
+                    @if(!empty($asset['image']))
+                        <img src="{{ asset($asset['image']) }}"
+                             alt="{{ $asset['name'] }}"
+                             class="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105"
+                             onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden');">
+                        <!-- Fallback if image fails to load -->
+                        <div class="hidden w-24 h-24 bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl flex items-center justify-center">
+                            <i class="fas fa-image text-purple-300 text-4xl"></i>
+                        </div>
+                    @else
+                        <div class="w-24 h-24 bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl flex items-center justify-center">
+                            $icons = [
+                                'laptop' => 'fa-laptop',
+                                'monitor' => 'fa-desktop',
+                                'keyboard' => 'fa-keyboard',
+                                'mouse' => 'fa-mouse',
+                                'printer' => 'fa-print',
+                                'scanner' => 'fa-scanner',
+                                'projector' => 'fa-video'
+                            ];
+                            $icon = $icons[strtolower($asset['category'] ?? 'other')] ?? 'fa-box';
+                            @endphp
+                            <i class="fas {{ $icon }} text-purple-600 text-4xl"></i>
+                        </div>
+                    @endif
                 </div>
 
                 <!-- Info -->
@@ -104,9 +114,17 @@
                     <h3 class="text-xl font-bold text-gray-800 mb-3">{{ $asset['name'] ?? 'Unknown' }}</h3>
 
                     <div class="space-y-2 mb-4">
+                        @php
+                            // Prioritize Controller-calculated count (which includes pending deductions)
+                            $availableCount = $asset['available_count'] ?? (
+                                isset($asset['items'])
+                                ? collect($asset['items'])->where('status', 'available')->count()
+                                : (($asset['status'] ?? '') === 'available' ? 1 : 0)
+                            );
+                        @endphp
                         <div class="flex items-center text-sm text-gray-600">
-                            <i class="fas fa-barcode text-purple-500 mr-2 w-4"></i>
-                            <span class="font-mono">{{ $asset['serial_number'] ?? '-' }}</span>
+                            <i class="fas fa-boxes text-purple-500 mr-2 w-4"></i>
+                            <span class="font-medium">Stok Tersedia: {{ $availableCount }}</span>
                         </div>
                         <div class="flex items-center text-sm text-gray-600">
                             <i class="fas fa-map-marker-alt text-purple-500 mr-2 w-4"></i>
