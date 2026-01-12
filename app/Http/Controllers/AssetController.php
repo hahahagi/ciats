@@ -229,7 +229,7 @@ class AssetController extends Controller
             'category' => 'required|string|max:100',
             'location' => 'required|string|max:255',
             'quantity' => 'required|integer|min:1|max:100',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
             'description' => 'nullable|string|max:500',
         ]);
 

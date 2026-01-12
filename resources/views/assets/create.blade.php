@@ -43,9 +43,9 @@
             <div>
                 <label class="block text-gray-700 font-medium mb-2">
                     <i class="fas fa-image text-blue-600 mr-2"></i>
-                    Foto Aset
+                    Foto Aset <span class="text-red-500">*</span>
                 </label>
-                <input type="file" name="image" accept="image/*"
+                <input type="file" name="image" accept="image/*" required
                     class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition">
                 <p class="text-sm text-gray-500 mt-1">Upload foto asli aset (JPG/PNG).</p>
                 @error('image')

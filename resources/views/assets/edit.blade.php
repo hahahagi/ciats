@@ -93,11 +93,6 @@
                     </select>
                 </div>
             </div>
-                        <i class="fas fa-info-circle text-purple-600 mr-2"></i>
-                        Status <span class="text-red-500">*</span>
-                    </label>
-                    <select name="status" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 transition" required>
-
 
             <!-- Description -->
             <div>
