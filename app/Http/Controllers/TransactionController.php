@@ -564,6 +564,8 @@ class TransactionController extends Controller
             return back()->with('error', "Stok tidak mencukupi. Tersedia: {$realAvailable}, Diminta: {$quantity}.");
         }
 
+        $groupId = $quantity > 1 ? uniqid('grp_') : null;
+
         // Loop create transaction for each quantity requested
         for ($i = 0; $i < $quantity; $i++) {
             // Buat transaction baru
@@ -591,7 +593,7 @@ class TransactionController extends Controller
                 'condition_before' => 'good',
                 'condition_after' => null,
                 'damage_notes' => null,
-                'request_group_id' => $quantity > 1 ? uniqid('grp_') : null, // Optional grouping
+                'request_group_id' => $groupId, // Use consistent Group ID
             ];
 
             // Simpan transaction
@@ -641,7 +643,7 @@ class TransactionController extends Controller
         return view('transactions.my-requests', [
             'transactions' => $myTransactions,
             'user' => $user,
-            'title' => 'Request Saya'
+            'title' => 'Daftar Request Saya'
         ]);
     }
 
@@ -662,7 +664,9 @@ class TransactionController extends Controller
         }
 
         $transactionsRef = $this->database->getReference('transactions')->getValue();
-        $pendingTransactions = [];
+        $groupedTransactions = [];
+        $totalPending = 0;
+
         $stats = [
             'approved_week' => 0,
             'rejected_week' => 0,
@@ -678,7 +682,26 @@ class TransactionController extends Controller
                 // Filter pending transactions for list
                 if ($status == 'waiting_approval') {
                     $transaction['id'] = $id;
-                    $pendingTransactions[] = $transaction;
+                    $totalPending++;
+
+                    // GROUPING LOGIC
+                    // Group by: User + Asset + ReturnDate + Location + Purpose
+                    $groupKey = md5(
+                        ($transaction['user_id'] ?? '') .
+                            ($transaction['asset_id'] ?? '') .
+                            ($transaction['expected_return_date'] ?? '') .
+                            ($transaction['requested_location'] ?? '') .
+                            trim($transaction['purpose'] ?? '')
+                    );
+
+                    if (!isset($groupedTransactions[$groupKey])) {
+                        $groupedTransactions[$groupKey] = [
+                            'key' => $groupKey,
+                            'data' => $transaction, // Representative data for card
+                            'items' => []
+                        ];
+                    }
+                    $groupedTransactions[$groupKey]['items'][] = $transaction;
                 }
 
                 // Calculate stats
@@ -687,18 +710,23 @@ class TransactionController extends Controller
                         $stats['rejected_week']++;
                     } else {
                         // Count as approved if it has a processed date and is not rejected
-                        // This includes: approved, active, completed
                         $stats['approved_week']++;
                     }
                 }
             }
         }
 
+        // Sort by requested_at descending
+        uasort($groupedTransactions, function ($a, $b) {
+            return ($b['data']['requested_at'] ?? 0) <=> ($a['data']['requested_at'] ?? 0);
+        });
+
         return view('transactions.pending-approvals', [
-            'transactions' => $pendingTransactions,
+            'groupedTransactions' => $groupedTransactions,
+            'totalPending' => $totalPending,
             'stats' => $stats,
             'user' => $user,
-            'title' => 'Persetujuan Peminjaman'
+            'title' => 'Daftar Persetujuan Peminjaman'
         ]);
     }
 
@@ -980,7 +1008,9 @@ class TransactionController extends Controller
         }
 
         $transactionsRef = $this->database->getReference('transactions')->getValue();
-        $activeTransactions = [];
+        $groupedTransactions = [];
+        $totalActive = 0;
+
         $stats = [
             'due_today' => 0,
             'overdue' => 0,
@@ -995,7 +1025,34 @@ class TransactionController extends Controller
             foreach ($transactionsRef as $id => $transaction) {
                 if (($transaction['status'] ?? '') == 'active') {
                     $transaction['id'] = $id;
-                    $activeTransactions[] = $transaction;
+                    $totalActive++;
+
+                    // GROUPING LOGIC (Same as pending approvals)
+                    // Group by: User + Asset + ReturnDate + Location + Purpose
+                    // Actually for active loans, maybe Asset + User + ReturnDate is enough?
+                    // Let's use the same extensive key to be safe.
+                    // Or reuse GroupID if available?
+
+                    $groupKey = md5(
+                        ($transaction['user_id'] ?? '') .
+                            ($transaction['asset_id'] ?? '') .
+                            ($transaction['expected_return_date'] ?? '') .
+                            ($transaction['requested_location'] ?? '') .
+                            trim($transaction['purpose'] ?? '')
+                    );
+
+                    if (!isset($groupedTransactions[$groupKey])) {
+                        $groupedTransactions[$groupKey] = [
+                            'group_key' => $groupKey,
+                            'user_id' => $transaction['user_id'] ?? '',
+                            'user_name' => $transaction['user_name'] ?? 'Unknown',
+                            'user_email' => $transaction['user_email'] ?? '',
+                            'asset_id' => $transaction['asset_id'] ?? '',
+                            'asset_name' => $transaction['asset_name'] ?? '',
+                            'items' => []
+                        ];
+                    }
+                    $groupedTransactions[$groupKey]['items'][] = $transaction;
 
                     // Calculate stats
                     $expectedReturn = $transaction['expected_return_date'] ?? 0;
@@ -1011,11 +1068,27 @@ class TransactionController extends Controller
             }
         }
 
+        // Finalize groups (count, is_grouped)
+        foreach ($groupedTransactions as $key => &$group) {
+            $group['count'] = count($group['items']);
+            $group['is_grouped'] = $group['count'] > 1;
+        }
+        unset($group);
+
+        // Sort by expected_return_date ASC (soonest first)
+        uasort($groupedTransactions, function ($a, $b) {
+            // Use first item for sorting date
+            $dateA = $a['items'][0]['expected_return_date'] ?? 0;
+            $dateB = $b['items'][0]['expected_return_date'] ?? 0;
+            return $dateA <=> $dateB;
+        });
+
         return view('transactions.active-loans', [
-            'transactions' => $activeTransactions,
+            'groupedTransactions' => $groupedTransactions,
+            'totalActive' => $totalActive,
             'stats' => $stats,
             'user' => $user,
-            'title' => 'Peminjaman Aktif'
+            'title' => 'Daftar Peminjaman Aktif'
         ]);
     }
 
@@ -1052,7 +1125,7 @@ class TransactionController extends Controller
         return view('transactions.all-transactions', [
             'transactions' => $allTransactions,
             'user' => $user,
-            'title' => 'Semua Transaksi'
+            'title' => 'Daftar Semua Transaksi'
         ]);
     }
 

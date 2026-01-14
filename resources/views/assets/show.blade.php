@@ -148,6 +148,7 @@
 
                                         if ($statusKey == 'available') $statusClass = 'bg-green-100 text-green-700';
                                         elseif ($statusKey == 'booked') $statusClass = 'bg-yellow-100 text-yellow-800';
+                                        elseif ($statusKey == 'booked_pending') $statusClass = 'bg-orange-100 text-orange-800 border border-orange-200';
                                         elseif ($statusKey == 'in_use') $statusClass = 'bg-blue-100 text-blue-700';
                                         elseif ($statusKey == 'damaged') $statusClass = 'bg-red-100 text-red-700';
                                         elseif ($statusKey == 'maintenance') $statusClass = 'bg-orange-100 text-orange-700';

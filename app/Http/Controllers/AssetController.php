@@ -148,14 +148,21 @@ class AssetController extends Controller
         $allTransactions = $this->database->getReference('transactions')->getValue() ?? [];
         $assetTransactions = [];
         $reservedCount = 0;
+        $approvedCount = 0;
+        $waitingCount = 0;
 
         foreach ($allTransactions as $transId => $trans) {
             if (($trans['asset_id'] ?? '') === $id) {
                 $trans['id'] = $transId;
                 $assetTransactions[] = $trans;
 
-                // Count active reservations (pending or approved but not yet checked out)
-                if (in_array(($trans['status'] ?? ''), ['waiting_approval', 'approved'])) {
+                // detailed counting
+                $status = $trans['status'] ?? '';
+                if ($status === 'approved') {
+                    $approvedCount++;
+                    $reservedCount++;
+                } elseif ($status === 'waiting_approval') {
+                    $waitingCount++;
                     $reservedCount++;
                 }
             }
@@ -164,20 +171,29 @@ class AssetController extends Controller
         $items = $asset['items'] ?? [];
         $formattedItems = [];
 
-        // We will "visually" assign 'booked' status to the first N available items
-        $itemsToMarkAsReserved = $reservedCount;
-
         foreach ($items as $itemId => $item) {
             $item['id'] = $itemId;
+            $currentStatus = $item['status'] ?? 'available';
 
             // Logic to visually reserve items
-            if ($itemsToMarkAsReserved > 0 && ($item['status'] ?? 'available') === 'available') {
-                $item['status_display'] = 'booked'; // Custom display status
-                $item['status_label'] = 'Booked (Queue)';
-                $itemsToMarkAsReserved--;
+            // Priority 1: Approved (Ready for Checkout)
+            // Priority 2: Waiting Approval
+            if ($currentStatus === 'available') {
+                if ($approvedCount > 0) {
+                    $item['status_display'] = 'booked'; // Ready for checkout
+                    $item['status_label'] = 'Booked (Ready)';
+                    $approvedCount--;
+                } elseif ($waitingCount > 0) {
+                    $item['status_display'] = 'booked_pending'; // Waiting approval
+                    $item['status_label'] = 'Booked (Pending)';
+                    $waitingCount--;
+                } else {
+                    $item['status_display'] = 'available';
+                    $item['status_label'] = 'Available';
+                }
             } else {
-                $item['status_display'] = $item['status'] ?? 'available';
-                $item['status_label'] = ucfirst($item['status'] ?? 'available');
+                $item['status_display'] = $currentStatus;
+                $item['status_label'] = ucfirst(str_replace('_', ' ', $currentStatus));
             }
 
             $formattedItems[] = $item;
@@ -213,7 +229,7 @@ class AssetController extends Controller
             'locations' => $locations,
             'categories' => $categories,
             'user' => $user,
-            'title' => 'Tambah Aset Baru'
+            'title' => 'Tambah Aset'
         ]);
     }
 

@@ -88,7 +88,7 @@ class UserController extends Controller
 
             return view('users.index', [
                 'users' => $users,
-                'title' => 'Manajemen User',
+                'title' => 'Daftar User',
                 'user'  => Session::get('user'),
             ]);
         } catch (\Exception $e) {
@@ -113,7 +113,7 @@ class UserController extends Controller
 
         return view('users.create', [
             'roles' => $roles,
-            'title' => 'Tambah User Baru',
+            'title' => 'Tambah User',
             'user'  => $currentUser,
         ]);
     }

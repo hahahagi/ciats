@@ -48,7 +48,7 @@ class CategoryController extends Controller
         return view('categories.index', [
             'categories' => $formattedCategories,
             'user' => $user,
-            'title' => 'Kelola Kategori'
+            'title' => 'Daftar Kategori'
         ]);
     }
 

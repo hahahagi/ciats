@@ -49,7 +49,7 @@ class AuthController extends Controller
         if (Session::has('user')) {
             return redirect('/dashboard');
         }
-        return view('auth.login_employee');
+        return view('auth.login_employee', ['title' => 'Login Employee']);
     }
 
     /**
@@ -60,7 +60,7 @@ class AuthController extends Controller
         if (Session::has('user')) {
             return redirect('/dashboard');
         }
-        return view('auth.login_admin');
+        return view('auth.login_admin', ['title' => 'Login Admin']);
     }
 
     /**
@@ -71,7 +71,7 @@ class AuthController extends Controller
         if (Session::has('user')) {
             return redirect('/dashboard');
         }
-        return view('auth.login_operator');
+        return view('auth.login_operator', ['title' => 'Login Operator']);
     }
 
     /**
@@ -82,7 +82,7 @@ class AuthController extends Controller
         if (Session::has('user')) {
             return redirect('/dashboard');
         }
-        return view('auth.login_super_admin');
+        return view('auth.login_super_admin', ['title' => 'Login Super Admin']);
     }
 
     /**
@@ -276,7 +276,7 @@ class AuthController extends Controller
 
         $data = [
             'user' => $user,
-            'title' => 'Dashboard CIATS',
+            'title' => 'Dashboard',
             'stats' => $stats,
             'activities' => $activities,
         ];

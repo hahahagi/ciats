@@ -343,7 +343,7 @@
                         $icon = 'fa-circle';
                         $bgClass = 'bg-gray-100';
                         $textClass = 'text-gray-600';
-                        $title = 'Aktivitas';
+                        $activityTitle = 'Aktivitas';
                         $desc = "$assetName";
 
                         switch($status) {
@@ -352,21 +352,21 @@
                                 $icon = 'fa-clock';
                                 $bgClass = 'bg-yellow-100';
                                 $textClass = 'text-yellow-600';
-                                $title = "Request Peminjaman";
+                                $activityTitle = "Request Peminjaman";
                                 $desc = "$userName mengajukan peminjaman $assetName";
                                 break;
                             case 'approved':
                                 $icon = 'fa-check-circle';
                                 $bgClass = 'bg-green-100';
                                 $textClass = 'text-green-600';
-                                $title = "Peminjaman Disetujui";
+                                $activityTitle = "Peminjaman Disetujui";
                                 $desc = "Request $userName untuk $assetName disetujui";
                                 break;
                             case 'active':
                                 $icon = 'fa-hand-holding';
                                 $bgClass = 'bg-blue-100';
                                 $textClass = 'text-blue-600';
-                                $title = "Barang Diambil";
+                                $activityTitle = "Barang Diambil";
                                 $desc = "$userName telah mengambil $assetName";
                                 break;
                             case 'completed':
@@ -374,21 +374,21 @@
                                 $icon = 'fa-check-double';
                                 $bgClass = 'bg-indigo-100';
                                 $textClass = 'text-indigo-600';
-                                $title = "Barang Dikembalikan";
+                                $activityTitle = "Barang Dikembalikan";
                                 $desc = "$userName telah mengembalikan $assetName";
                                 break;
                             case 'rejected':
                                 $icon = 'fa-times-circle';
                                 $bgClass = 'bg-red-100';
                                 $textClass = 'text-red-600';
-                                $title = "Request Ditolak";
+                                $activityTitle = "Request Ditolak";
                                 $desc = "Pengajuan $userName untuk $assetName ditolak";
                                 break;
                             default:
                                 $icon = 'fa-info-circle';
                                 $bgClass = 'bg-gray-100';
                                 $textClass = 'text-gray-600';
-                                $title = "Status: " . ucfirst($status);
+                                $activityTitle = "Status: " . ucfirst($status);
                                 $desc = "$userName - $assetName";
                         }
                     @endphp
@@ -398,7 +398,7 @@
                             <i class="fas {{ $icon }} {{ $textClass }}"></i>
                         </div>
                         <div class="flex-1">
-                            <p class="font-medium text-gray-800">{{ $title }}</p>
+                            <p class="font-medium text-gray-800">{{ $activityTitle }}</p>
                             <p class="text-sm text-gray-600">{{ $desc }}</p>
                             <p class="text-xs text-gray-400 mt-1">
                                 <i class="far fa-clock mr-1"></i> {{ $time }}
